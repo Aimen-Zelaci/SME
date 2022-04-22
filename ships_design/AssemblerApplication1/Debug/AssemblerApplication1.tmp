@@ -1,0 +1,55 @@
+<ASSEMBLER_INFO>
+ <VERSION>2.2.8</VERSION>
+ <DEVICE>"ATmega328P"</DEVICE>
+ <WORKING_DIR>C:\Users\Slash\Documents\solution\AssemblerApplication1\Debug</WORKING_DIR>
+ <INCLUDE_PATH>
+  <DIR>C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.6.364\avrasm\inc</DIR>
+  <DIR>C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avrassembler\Include</DIR>
+  <DIR></DIR>
+ </INCLUDE_PATH>
+ <SOURCE_FILE>C:\Users\Slash\Documents\solution\AssemblerApplication1\main.asm</SOURCE_FILE>
+ <INCLUDED_FILES>
+  <FILE>C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.6.364\avrasm\inc\m328Pdef.inc</FILE>
+  <FILE>C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.6.364\avrasm\inc\m328pdef.inc</FILE>
+ </INCLUDED_FILES>
+ <OBJECT_FILES>
+  <FILE>C:\Users\Slash\Documents\solution\AssemblerApplication1\Debug\AssemblerApplication1.obj</FILE>
+ </OBJECT_FILES>
+ <HEX_FILES>
+  <FILE>AssemblerApplication1.hex</FILE>
+ </HEX_FILES>
+ <OUTPUT_FILES>
+  <FILE>AssemblerApplication1.map</FILE>
+  <FILE>AssemblerApplication1.lss</FILE>
+ </OUTPUT_FILES>
+ <LABELS>
+  <init><FILE>C:\Users\Slash\Documents\solution\AssemblerApplication1\main.asm</FILE><LINE>21</LINE></init>
+  <TimerInterrupt><FILE>C:\Users\Slash\Documents\solution\AssemblerApplication1\main.asm</FILE><LINE>412</LINE></TimerInterrupt>
+  <InitScreenState><FILE>C:\Users\Slash\Documents\solution\AssemblerApplication1\main.asm</FILE><LINE>319</LINE></InitScreenState>
+  <SECOND_ROW><FILE>C:\Users\Slash\Documents\solution\AssemblerApplication1\main.asm</FILE><LINE>64</LINE></SECOND_ROW>
+  <main><FILE>C:\Users\Slash\Documents\solution\AssemblerApplication1\main.asm</FILE><LINE>125</LINE></main>
+  <DISPLAY><FILE>C:\Users\Slash\Documents\solution\AssemblerApplication1\main.asm</FILE><LINE>362</LINE></DISPLAY>
+  <CHECK_STATE><FILE>C:\Users\Slash\Documents\solution\AssemblerApplication1\main.asm</FILE><LINE>132</LINE></CHECK_STATE>
+  <DISPLAY_INTERMEDIATE_STATE><FILE>C:\Users\Slash\Documents\solution\AssemblerApplication1\main.asm</FILE><LINE>305</LINE></DISPLAY_INTERMEDIATE_STATE>
+  <CONTEXT_SWITCH><FILE>C:\Users\Slash\Documents\solution\AssemblerApplication1\main.asm</FILE><LINE>344</LINE></CONTEXT_SWITCH>
+  <RESET_CONTEXT><FILE>C:\Users\Slash\Documents\solution\AssemblerApplication1\main.asm</FILE><LINE>353</LINE></RESET_CONTEXT>
+  <MOVE_DOWN><FILE>C:\Users\Slash\Documents\solution\AssemblerApplication1\main.asm</FILE><LINE>149</LINE></MOVE_DOWN>
+  <READ><FILE>C:\Users\Slash\Documents\solution\AssemblerApplication1\main.asm</FILE><LINE>184</LINE></READ>
+  <READ1><FILE>C:\Users\Slash\Documents\solution\AssemblerApplication1\main.asm</FILE><LINE>214</LINE></READ1>
+  <READ2><FILE>C:\Users\Slash\Documents\solution\AssemblerApplication1\main.asm</FILE><LINE>249</LINE></READ2>
+  <READ3><FILE>C:\Users\Slash\Documents\solution\AssemblerApplication1\main.asm</FILE><LINE>279</LINE></READ3>
+  <DELAY><FILE>C:\Users\Slash\Documents\solution\AssemblerApplication1\main.asm</FILE><LINE>290</LINE></DELAY>
+  <LOOP><FILE>C:\Users\Slash\Documents\solution\AssemblerApplication1\main.asm</FILE><LINE>291</LINE></LOOP>
+  <NESTED><FILE>C:\Users\Slash\Documents\solution\AssemblerApplication1\main.asm</FILE><LINE>293</LINE></NESTED>
+  <NESTED2><FILE>C:\Users\Slash\Documents\solution\AssemblerApplication1\main.asm</FILE><LINE>295</LINE></NESTED2>
+  <SEND_DATA><FILE>C:\Users\Slash\Documents\solution\AssemblerApplication1\main.asm</FILE><LINE>307</LINE></SEND_DATA>
+  <LOOP_BUFF><FILE>C:\Users\Slash\Documents\solution\AssemblerApplication1\main.asm</FILE><LINE>325</LINE></LOOP_BUFF>
+  <LOOP_BUFF1_><FILE>C:\Users\Slash\Documents\solution\AssemblerApplication1\main.asm</FILE><LINE>335</LINE></LOOP_BUFF1_>
+  <LOAD_BYTE><FILE>C:\Users\Slash\Documents\solution\AssemblerApplication1\main.asm</FILE><LINE>364</LINE></LOAD_BYTE>
+  <SEND_BYTE_COL><FILE>C:\Users\Slash\Documents\solution\AssemblerApplication1\main.asm</FILE><LINE>368</LINE></SEND_BYTE_COL>
+  <CARRY_ISONE><FILE>C:\Users\Slash\Documents\solution\AssemblerApplication1\main.asm</FILE><LINE>372</LINE></CARRY_ISONE>
+  <SEND_BYTE_ROW><FILE>C:\Users\Slash\Documents\solution\AssemblerApplication1\main.asm</FILE><LINE>384</LINE></SEND_BYTE_ROW>
+  <_CARRY_ISZERO><FILE>C:\Users\Slash\Documents\solution\AssemblerApplication1\main.asm</FILE><LINE>388</LINE></_CARRY_ISZERO>
+  <AWAIT><FILE>C:\Users\Slash\Documents\solution\AssemblerApplication1\main.asm</FILE><LINE>396</LINE></AWAIT>
+ </LABELS>
+</ASSEMBLER_INFO>
