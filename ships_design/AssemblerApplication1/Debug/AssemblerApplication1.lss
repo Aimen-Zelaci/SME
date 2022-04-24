@@ -1,10 +1,10 @@
 
-AVRASM ver. 2.2.8  C:\Users\Slash\Documents\solution\AssemblerApplication1\main.asm Fri Apr 22 20:19:35 2022
+AVRASM ver. 2.2.8  C:\Users\Slash\Documents\SME\ships_design\AssemblerApplication1\main.asm Sun Apr 24 19:35:37 2022
 
 [builtin](2): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.6.364\avrasm\inc\m328Pdef.inc'
-C:\Users\Slash\Documents\solution\AssemblerApplication1\main.asm(1): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.6.364\avrasm\inc\m328pdef.inc'
+C:\Users\Slash\Documents\SME\ships_design\AssemblerApplication1\main.asm(1): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.6.364\avrasm\inc\m328pdef.inc'
 [builtin](2): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.6.364\avrasm\inc\m328Pdef.inc'
-C:\Users\Slash\Documents\solution\AssemblerApplication1\main.asm(1): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.6.364\avrasm\inc\m328pdef.inc'
+C:\Users\Slash\Documents\SME\ships_design\AssemblerApplication1\main.asm(1): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.6.364\avrasm\inc\m328pdef.inc'
                                  
                                  .INCLUDE "m328pdef.inc"
                                  
@@ -1035,17 +1035,23 @@ C:\Users\Slash\Documents\solution\AssemblerApplication1\main.asm(1): Including f
 000000 c020                      rjmp init
                                  
                                  .org 0x0020
-000020 c12a                      rjmp TimerInterrupt
+000020 c212                      rjmp TimerInterrupt
                                  
                                  
                                  
-                                 .EQU MonsterNotGunPat = 0b01111001
-                                 .EQU MonsterGunPat = 0b01111001
+                                 .EQU MonsterNotGunPat = 0b11111001
+                                 .EQU MonsterGunPat = 0b11111001
+                                 .EQU ShipGun = 0b0011111
+                                 .EQU ShipMiddle = 0b00111110
+                                 .EQU ShipEnd = 0b0010000
                                  
                                  .EQU BTN8_PATTERN = 0b01111011 ; Button 8 pressed pattern
                                  .EQU BTN7_PATTERN = 0b01110111 ; Button 7 pressed pattern
                                  .EQU BTN5_PATTERN = 0b10111011 ; Button 5 pressed pattern
                                  .EQU BTN4_PATTERN = 0b10110111 ; Button 4 pressed pattern
+                                 .EQU BTNA_PATTERN = 0b11100111 ; Button A pressed pattern
+                                 .EQU BTN0_PATTERN = 0b11101110 ; Button 0 pressed pattern
+                                 .EQU BTN1_PATTERN = 0b11010111 ; Button 1 pressed pattern
                                  .EQU NOBTN_PATTERN =  0b11111111 ; No button preesed pattern
                                  .EQU OTHER_PATTERN = 0b00110011 ; Pattern for the rest of the buttons
                                  
@@ -1082,13 +1088,13 @@ C:\Users\Slash\Documents\solution\AssemblerApplication1\main.asm(1): Including f
                                  
                                  
                                  ; 1ST ROW
-000036 e709                      LDI R16, MonsterNotGunPat
+000036 ef09                      LDI R16, MonsterNotGunPat
 000037 9300 0212                 STS 0x212, R16
 000039 e10f                      LDI R16, 0b00011111
 00003a 9300 0213                 STS 0x213, R16
-00003c e400                      LDI R16, 0b01000000
+00003c e100                      LDI R16, ShipEnd
 00003d 9300 0214                 STS 0x214, R16
-00003f d0c6                      RCALL InitScreenState
+00003f d110                      RCALL InitScreenState
                                  		
                                  
                                  ;2ND ROW
@@ -1097,38 +1103,38 @@ C:\Users\Slash\Documents\solution\AssemblerApplication1\main.asm(1): Including f
 000041 9300 0212                 STS 0x212, R16
 000043 e10f                      LDI R16, 0b00011111
 000044 9300 0213                 STS 0x213, R16
-000046 e708                      LDI R16, 0b01111000
+000046 e30e                      LDI R16, ShipMiddle
 000047 9300 0214                 STS 0x214, R16
-000049 940e 0106                 CALL InitScreenState
+000049 940e 0150                 CALL InitScreenState
                                              
                                  
                                  
                                  ;3RD ROW
 00004b e10f                      LDI R16, 0b00011111
 00004c 9300 0212                 STS 0x212, R16
-00004e e709                      LDI R16, MonsterGunPat
+00004e ef09                      LDI R16, MonsterGunPat
 00004f 9300 0213                 STS 0x213, R16
-000051 e70c                      LDI R16, 0b01111100
+000051 e10f                      LDI R16, ShipGun
 000052 9300 0214                 STS 0x214, R16
-000054 940e 0106                 CALL InitScreenState
+000054 940e 0150                 CALL InitScreenState
                                  
                                  ;4th ROW
-000056 e709                      LDI R16, MonsterGunPat
+000056 ef09                      LDI R16, MonsterGunPat
 000057 9300 0212                 STS 0x212, R16
-000059 e709                      LDI R16, MonsterNotGunPat
+000059 ef09                      LDI R16, MonsterNotGunPat
 00005a 9300 0213                 STS 0x213, R16
-00005c e708                      LDI R16, 0b01111000
+00005c e30e                      LDI R16, ShipMiddle
 00005d 9300 0214                 STS 0x214, R16
-00005f 940e 0106                 CALL InitScreenState
+00005f 940e 0150                 CALL InitScreenState
                                  
                                  ;5th ROW
-000061 e709                      LDI R16, MonsterNotGunPat
+000061 ef09                      LDI R16, MonsterNotGunPat
 000062 9300 0212                 STS 0x212, R16
 000064 e10f                      LDI R16, 0b00011111
 000065 9300 0213                 STS 0x213, R16
-000067 e400                      LDI R16, 0b01000000
+000067 e100                      LDI R16, ShipEnd
 000068 9300 0214                 STS 0x214, R16
-00006a 940e 0106                 CALL InitScreenState
+00006a 940e 0150                 CALL InitScreenState
                                  
                                  ;6th ROW
 00006c e10f                      LDI R16, 0b00011111
@@ -1137,313 +1143,664 @@ C:\Users\Slash\Documents\solution\AssemblerApplication1\main.asm(1): Including f
 000070 9300 0213                 STS 0x213, R16
 000072 e000                      LDI R16, 0b00000000
 000073 9300 0214                 STS 0x214, R16
-000075 940e 0106                 CALL InitScreenState
+000075 940e 0150                 CALL InitScreenState
                                  
                                  ; 7th ROW
 000077 e10f                      LDI R16, 0b00011111
 000078 9300 0212                 STS 0x212, R16
-00007a e709                      LDI R16, MonsterGunPat
+00007a ef09                      LDI R16, MonsterGunPat
 00007b 9300 0213                 STS 0x213, R16
 00007d e000                      LDI R16, 0b00000000
 00007e 9300 0214                 STS 0x214, R16
-000080 940e 0106                 CALL InitScreenState 
+000080 940e 0150                 CALL InitScreenState 
                                   
 000082 e0e0                      LDI ZL, 0x00 ; Reset
 000083 e0f1                      LDI ZH, 0x01
                                  
 000084 e071                      LDI R23, 0x01
-                                    
-000085 940e 0124                 main: CALL DISPLAY
-                                     
-000087 c001                      	RJMP CHECK_STATE
                                  
-000088 cffc                      	RJMP main
-                                 	
+000085 ebc0                      LDI YL, 0xB0
+000086 e0d8                      LDI YH, 0x08
                                  
-                                 CHECK_STATE: 
-                                 	 ; --------------- MOVE TO INTERMEDIATE STATE OF THE SCREEN ---------
-000089 d072                      			RCALL DISPLAY_INTERMEDIATE_STATE
+000087 940e 016e                 main: CALL DISPLAY
+000089 940e 01cf                 	  CALL UPDATE_STATE
                                  
-00008a b129                      	  IN R18,PIND ; Copy PIND into R18
-00008b d08e                      	  RCALL CONTEXT_SWITCH ; Call context switch (RCALL takes less instruction cycles than CALL)
-00008c b139                      	  IN R19,PIND ; Copy PIND into R19
-00008d d091                      	  RCALL RESET_CONTEXT ; Call reset context 
-00008e 2b23                      	  OR R18,R19 ; R18 OR R19 and store the result in R18
-                                 	  
+00008b c000                      	RJMP CHECK_STATE
+                                 			 
                                  
-00008f 3b27                      	  CPI R18,BTN4_PATTERN ; If button 8 is pressed
-000090 f021                      	  BREQ MOVE_DOWN
-000091 e051                      	LDI R21, 0x01 ; reset to first row again
-000092 e0e0                      	  LDI ZL, 0x00
-000093 e0f1                      	  LDI ZH, 0x01
-000094 cff0                      	  RJMP main
+                                 
+00008c b129                      CHECK_STATE: IN R18,PIND ; Copy PIND into R18
+00008d d0d6                      		     RCALL CONTEXT_SWITCH ; Call context switch (RCALL takes less instruction cycles than CALL)
+00008e b139                      		     IN R19,PIND ; Copy PIND into R19
+00008f d0d9                      		     RCALL RESET_CONTEXT ; Call reset context 
+000090 2b23                      		     OR R18,R19 ; R18 OR R19 and store the result in R18
+                                 
+000091 3b27                      		     CPI R18,BTN4_PATTERN ; If button 4 is pressed
+000092 f079                      		     BREQ MOVE_DOWN
+                                 
+000093 3d27                           		 CPI R18,BTN1_PATTERN ; If button 1 is pressed
+000094 f1f9                      		     BREQ MOVE_UP
+                                 
+000095 3e27                      		     CPI R18,BTNA_PATTERN ; If button A is pressed
+000096 f029                      		     BREQ SHOOT
+                                 
+000097 d0fd                      			 RCALL SHOOT_BOSS
+                                 
+000098 e051                      		     LDI R21, 0x01 ; reset to first row again
+000099 e0e0                      		     LDI ZL, 0x00
+00009a e0f1                      		     LDI ZH, 0x01
+00009b cfeb                      		     RJMP main
+                                 
+00009c 940e 01ab                 SHOOT: CALL SHIP_SHOOT
+00009e e051                      	   LDI R21, 0x01 ; reset to first row again
+00009f e0e0                      	   LDI ZL, 0x00
+0000a0 e0f1                      	   LDI ZH, 0x01
+0000a1 cfe5                      	   RJMP main
+                                 
                                  MOVE_DOWN:   
-000095 9842                      		CBI PORTC,2 ; Turn on top led
+0000a2 9842                      		CBI PORTC,2 ; Turn on top led
+                                 
+                                 		
+                                 	 ; --------------- MOVE TO INTERMEDIATE STATE OF THE SCREEN ---------
+0000a3 d0a2                      			RCALL DISPLAY_INTERMEDIATE_STATE
+                                 
+                                 		; -------------- CHECK IF SHIP IS AT THE END ----------------
+0000a4 e0e0                      		LDI ZL, 0x00 ; Start at 10
+0000a5 e0f1                      		LDI ZH, 0x01
+                                 
+0000a6 d098                      		RCALL POINT65TH_BYTE ; can't read with ldd for over 63
+0000a7 8100                      		LD R16, Z
+                                 
+0000a8 3100                      		CPI R16, ShipEnd
+0000a9 f131                      		BREQ FinishMoveDown
                                  		    
                                         ; --------------- COPY PARTS OF THE SHIP TO POINTER X -----------
-                                 
-                                 		; ------------ FIRST ROW OF BLOCKS --------------
-000096 e0e0                      		LDI ZL, 0x00 ; Start at 10
-000097 e0f1                      		LDI ZH, 0x01
-                                 
-000098 e2a0                      		LDI XL, 0x20
-000099 e0b2                      		LDI XH, 0x02
-                                 		
-00009a e000                      		LDI R16, 0x00
-00009b 930d                      		ST X+, R16
-                                 
-00009c 8501                      		LDD R16, Z+9
-00009d 930d                      		ST X+, R16
-                                 
-00009e 8903                      		LDD R16, Z+19
-00009f 930d                      		ST X+, R16
-                                 
-0000a0 8d05                      		LDD R16, Z+29
-0000a1 930d                      		ST X+, R16
-                                 
-0000a2 a107                      		LDD R16, Z+39
-0000a3 930d                      		ST X+, R16
-                                 
-0000a4 a901                      		LDD R16, Z+49
-0000a5 930d                      		ST X+, R16
-                                 
-0000a6 ad03                      		LDD R16, Z+59
-0000a7 930d                      		ST X+, R16
-                                 
-                                 		; cant' write with std for over 63
-0000a8 e415                      		LDI R17, 69
-0000a9 9101                      		READ: LD R16, Z+
-0000aa 951a                      			  DEC R17
-0000ab f7e9                      			  BRNE READ
-0000ac 8100                      		LD R16, Z
-0000ad 930d                      		ST X+, R16
-                                 
-                                 		; ------------ SECOND ROW OF BLOCKS --------------
-0000ae e0e0                      		LDI ZL, 0x00 
-0000af e0f1                      		LDI ZH, 0x01
-                                 
-0000b0 8104                      		LDD R16, Z+4
-0000b1 930d                      		ST X+, R16
-                                 
-0000b2 8506                      		LDD R16, Z+14
-0000b3 930d                      		ST X+, R16
-                                 
-0000b4 8d00                      		LDD R16, Z+24
-0000b5 930d                      		ST X+, R16
-                                 
-0000b6 a102                      		LDD R16, Z+34
-0000b7 930d                      		ST X+, R16
-                                 
-0000b8 a504                      		LDD R16, Z+44
-0000b9 930d                      		ST X+, R16
-                                 
-0000ba a906                      		LDD R16, Z+54
-0000bb 930d                      		ST X+, R16
-                                 
-                                 		; cant' write with std for over 63
-0000bc e410                      		LDI R17, 64
-0000bd 9101                      		READ1: LD R16, Z+
-0000be 951a                      			  DEC R17
-0000bf f7e9                      			  BRNE READ1
-0000c0 8100                      		LD R16, Z
-0000c1 930d                      		ST X+, R16
+0000aa d05b                      	   RCALL COPY_SHIP
                                  
                                  		; -------------- MOVE DOWN ------------
                                  
                                  		; ------------ FIRST ROW OF BLOCKS --------------
-0000c2 e0e0                      		LDI ZL, 0x00 
-0000c3 e0f1                      		LDI ZH, 0x01
+0000ab e0e0                      		LDI ZL, 0x00 
+0000ac e0f1                      		LDI ZH, 0x01
                                  
-0000c4 e2a0                      		LDI XL, 0x20
-0000c5 e0b2                      		LDI XH, 0x02
+0000ad e2a0                      		LDI XL, 0x20
+0000ae e0b2                      		LDI XH, 0x02
                                  		
+0000af e000                      		LDI R16, 0x00 ; send 0 to the first row
+0000b0 8701                      		STD Z+9, R16
+                                 		
+0000b1 910d                      		LD R16, X+
+0000b2 8b03                      		STD Z+19, R16
+                                 
+0000b3 910d                      		LD R16, X+
+0000b4 8f05                      		STD Z+29, R16
+                                 
+0000b5 910d                      		LD R16, X+
+0000b6 a307                      		STD Z+39, R16
+                                 
+0000b7 910d                      		LD R16, X+
+0000b8 ab01                      		STD Z+49, R16
+                                 
+0000b9 910d                      		LD R16, X+
+0000ba af03                      		STD Z+59, R16
+                                 
+0000bb d07c                      		RCALL POINT70TH_BYTE
+                                       
+0000bc 910d                      	  LD R16, X+
+0000bd 8300                      	  ST Z, R16
+                                 
+                                 	  ; ------------ SECOND ROW OF BLOCKS --------------
+0000be e0e0                      	  LDI ZL, 0x00
+0000bf e0f1                      	  LDI ZH, 0x01
+                                 
+0000c0 910d                      	  LD R16, X+
+0000c1 8304                      		STD Z+4, R16
+                                 		
+0000c2 910d                      		LD R16, X+
+0000c3 8706                      		STD Z+14, R16
+                                 
+0000c4 910d                      		LD R16, X+
+0000c5 8f00                      		STD Z+24, R16
+                                 
 0000c6 910d                      		LD R16, X+
-0000c7 8701                      		STD Z+9, R16
-                                 		
+0000c7 a302                      		STD Z+34, R16
+                                 
 0000c8 910d                      		LD R16, X+
-0000c9 8b03                      		STD Z+19, R16
+0000c9 a704                      		STD Z+44, R16
                                  
 0000ca 910d                      		LD R16, X+
-0000cb 8f05                      		STD Z+29, R16
+0000cb ab06                      		STD Z+54, R16
                                  
-0000cc 910d                      		LD R16, X+
-0000cd a307                      		STD Z+39, R16
-                                 
-0000ce 910d                      		LD R16, X+
-0000cf ab01                      		STD Z+49, R16
-                                 
-0000d0 910d                      		LD R16, X+
-0000d1 af03                      		STD Z+59, R16
-                                 
-                                 		; cant' write with std for over 63
-0000d2 e415                      		LDI R17, 69
-0000d3 9101                      		READ2: LD R16, Z+
-0000d4 951a                      			  DEC R17
-0000d5 f7e9                      			  BRNE READ2
+0000cc d072                      		RCALL POINT65TH_BYTE
                                        
-0000d6 910d                      	  LD R16, X+
-0000d7 8300                      	  ST Z, R16
-                                 	  ; ------------ SECOND ROW OF BLOCKS --------------
-0000d8 e0e0                      	  LDI ZL, 0x00
-0000d9 e0f1                      	  LDI ZH, 0x01
+0000cd 910d                      		LD R16, X+
+0000ce 8300                      		ST Z, R16
                                  
-0000da 910d                      	  LD R16, X+
-0000db 8304                      		STD Z+4, R16
+                                 	   
+0000cf d05b                      	   RCALL AWAIT_KEYRELEASE
+                                 	   
+0000d0 e051                      	  FinishMoveDown: LDI R21, 0x01 ; reset to first row again
+0000d1 e0e0                      					  LDI ZL, 0x00
+0000d2 e0f1                      					  LDI ZH, 0x01
+0000d3 cfb3                      					  RJMP main
+                                 MOVE_UP:   
+0000d4 9842                      		CBI PORTC,2 ; Turn on top led
                                  		
-0000dc 910d                      		LD R16, X+
-0000dd 8706                      		STD Z+14, R16
+                                 	 ; --------------- MOVE TO INTERMEDIATE STATE OF THE SCREEN ---------
+0000d5 d070                      			RCALL DISPLAY_INTERMEDIATE_STATE
                                  
-0000de 910d                      		LD R16, X+
-0000df 8f00                      		STD Z+24, R16
                                  
-0000e0 910d                      		LD R16, X+
-0000e1 a302                      		STD Z+34, R16
+                                 		; -------------- CHECK IF SHIP IS AT THE END ----------------
+0000d6 e0e0                      		LDI ZL, 0x00 ; Start at 10
+0000d7 e0f1                      		LDI ZH, 0x01
                                  
-0000e2 910d                      		LD R16, X+
-0000e3 a704                      		STD Z+44, R16
+0000d8 8501                      		LDD R16, Z+9
                                  
-0000e4 910d                      		LD R16, X+
-0000e5 ab06                      		STD Z+54, R16
+0000d9 3100                      		CPI R16, ShipEnd
+0000da f139                      		BREQ FinishMoveUp
+                                 		    
+                                        ; --------------- COPY PARTS OF THE SHIP TO POINTER X -----------
+0000db d02a                      	   RCALL COPY_SHIP
+                                 	  
                                  
-                                 		; cant' write with std for over 63
-0000e6 e410                      		LDI R17, 64
-0000e7 9101                      		READ3: LD R16, Z+
-0000e8 951a                      			  DEC R17
-0000e9 f7e9                      			  BRNE READ3
+                                 		; -------------- MOVE UP ------------
+                                 		; ------------ FIRST ROW OF BLOCKS --------------
+0000dc e0e0                      	  LDI ZL, 0x00
+0000dd e0f1                      	  LDI ZH, 0x01
+                                 
+0000de e2a0                      	  LDI XL, 0x20
+0000df e0b2                      	  LDI XH, 0x02
+                                 
+0000e0 95a3                      	  INC XL ;skip the first segment
+                                 
+0000e1 910d                      	  LD R16, X+
+0000e2 8701                      	  STD Z+9, R16
+                                 
+0000e3 910d                      	  LD R16, X+
+0000e4 8b03                      	  STD Z+19, R16
+                                 
+0000e5 910d                      	  LD R16, X+
+0000e6 8f05                      	  STD Z+29, R16
+                                 
+0000e7 910d                      	  LD R16, X+
+0000e8 a307                      	  STD Z+39, R16
+                                 
+0000e9 910d                      	  LD R16, X+
+0000ea ab01                      	  STD Z+49, R16
+                                 
+0000eb 910d                      	  LD R16, X+
+0000ec af03                      	  STD Z+59, R16
+                                 
+0000ed d04a                      	  RCALL POINT70TH_BYTE
                                        
-0000ea 910d                      	  LD R16, X+
-0000eb 8300                      	  ST Z, R16
+0000ee 910d                      	  LD R16, X+
+0000ef 8300                      	  ST Z, R16
+                                 		
+                                 		; ------------ SECOND ROW OF BLOCKS --------------
+0000f0 e0e0                      		LDI ZL, 0x00
+0000f1 e0f1                      	  LDI ZH, 0x01
                                  
-0000ec e051                      	 LDI R21, 0x01 ; reset to first row again
-0000ed e0e0                      	  LDI ZL, 0x00
-0000ee e0f1                      	  LDI ZH, 0x01
+0000f2 910d                      	  LD R16, X+
+0000f3 8304                      		STD Z+4, R16
+                                 		
+0000f4 910d                      		LD R16, X+
+0000f5 8706                      		STD Z+14, R16
+                                 
+0000f6 910d                      		LD R16, X+
+0000f7 8f00                      		STD Z+24, R16
+                                 
+0000f8 910d                      		LD R16, X+
+0000f9 a302                      		STD Z+34, R16
+                                 
+0000fa 910d                      		LD R16, X+
+0000fb a704                      		STD Z+44, R16
+                                 
+0000fc 910d                      		LD R16, X+
+0000fd ab06                      		STD Z+54, R16
+                                 	
+                                 
+0000fe d040                      	  RCALL POINT65TH_BYTE ; cant' write with std for over 63
+0000ff e000                      	  LDI R16, 0x00 
+000100 8300                      	  ST Z, R16
+                                 	  
+000101 d029                      	  RCALL AWAIT_KEYRELEASE
                                  	   
-0000ef ef4f                      	   DELAY: LDI R20, 0xFF
-0000f0 0000                      	  LOOP:  NOP
-0000f1 efcf                      			LDI R28, 0xFF
-0000f2 0000                      			NESTED: NOP
-0000f3 e0d4                      					LDI R29, 0x04
-0000f4 0000                      					NESTED2: NOP
-0000f5 95da                      							 DEC R29
-0000f6 f7e9                      							 BRNE NESTED2
-0000f7 95ca                      					DEC R28
-0000f8 f7c9                      					BRNE NESTED
-0000f9 954a                      	   DEC R20
-0000fa f7a9                      	   BRNE LOOP
-                                 	   
-0000fb cf89                      	  RJMP main
-                                 			    
-0000fc e518                      DISPLAY_INTERMEDIATE_STATE: LDI R17, 88
-0000fd 982b                      				   CBI PORTB, 3
-0000fe 982d                      				   SEND_DATA: CBI PORTB, 5
-0000ff 9a2d                      							  SBI PORTB, 5
-000100 951a                      							  DEC R17
-000101 f7e1                      							  BRNE SEND_DATA
-000102 982c                      					CBI PORTB, 4
-000103 9a2c                      					SBI PORTB, 4
-000104 982c                      					CBI PORTB, 4
+000102 e051                      	  FinishMoveUp: LDI R21, 0x01 ; reset to first row again
+000103 e0e0                      					  LDI ZL, 0x00
+000104 e0f1                      					  LDI ZH, 0x01
+000105 cf81                      					  RJMP main
+                                 
+                                 COPY_SHIP: ; ------------ FIRST ROW OF BLOCKS --------------
+000106 e0e0                      		LDI ZL, 0x00 ; Start at 10
+000107 e0f1                      		LDI ZH, 0x01
+                                 
+000108 e2a0                      		LDI XL, 0x20
+000109 e0b2                      		LDI XH, 0x02
+                                 		
+                                 		;LDI R16, 0x00
+                                 		;ST X+, R16
+                                 
+00010a 8501                      		LDD R16, Z+9
+00010b 930d                      		ST X+, R16
+                                 
+00010c 8903                      		LDD R16, Z+19
+00010d 930d                      		ST X+, R16
+                                 
+00010e 8d05                      		LDD R16, Z+29
+00010f 930d                      		ST X+, R16
+                                 
+000110 a107                      		LDD R16, Z+39
+000111 930d                      		ST X+, R16
+                                 
+000112 a901                      		LDD R16, Z+49
+000113 930d                      		ST X+, R16
+                                 
+000114 ad03                      		LDD R16, Z+59
+000115 930d                      		ST X+, R16
+                                 
+000116 d021                      		RCALL POINT70TH_BYTE
+000117 8100                      		LD R16, Z
+000118 930d                      		ST X+, R16
+                                 
+                                 		; ------------ SECOND ROW OF BLOCKS --------------
+000119 e0e0                      		LDI ZL, 0x00 
+00011a e0f1                      		LDI ZH, 0x01
+                                 
+00011b 8104                      		LDD R16, Z+4
+00011c 930d                      		ST X+, R16
+                                 
+00011d 8506                      		LDD R16, Z+14
+00011e 930d                      		ST X+, R16
+                                 
+00011f 8d00                      		LDD R16, Z+24
+000120 930d                      		ST X+, R16
+                                 
+000121 a102                      		LDD R16, Z+34
+000122 930d                      		ST X+, R16
+                                 
+000123 a504                      		LDD R16, Z+44
+000124 930d                      		ST X+, R16
+                                 
+000125 a906                      		LDD R16, Z+54
+000126 930d                      		ST X+, R16
+                                 
+000127 d017                      		RCALL POINT65TH_BYTE
+000128 8100                      		LD R16, Z
+000129 930d                      		ST X+, R16
+                                 
+00012a 9508                      		RET
+                                 
+00012b ef4f                      AWAIT_KEYRELEASE: DELAY: LDI R20, 0xFF
+00012c 0000                      				  LOOP:  NOP
+00012d efcf                      						LDI R28, 0xFF
+00012e 0000                      						NESTED: NOP
+00012f e0d4                      								LDI R29, 0x04
+000130 0000                      								NESTED2: NOP
+000131 95da                      										 DEC R29
+000132 f7e9                      										 BRNE NESTED2
+000133 95ca                      								DEC R28
+000134 f7c9                      								BRNE NESTED
+000135 954a                      				   DEC R20
+000136 f7a9                      				   BRNE LOOP
+000137 9508                      				   RET
+                                 
+000138 e0e0                      POINT70TH_BYTE: LDI ZL, 0x00 
+000139 e0f1                      			   LDI ZH, 0x01
+00013a e415                      			   LDI R17, 69
+00013b 9101                      			   READ70TH_LOOP: LD R16, Z+
+00013c 951a                      					  DEC R17
+00013d f7e9                      					  BRNE READ70TH_LOOP
+                                 			
+00013e 9508                      		        RET
+                                 
+00013f e0e0                      POINT65TH_BYTE:  LDI ZL, 0x00
+000140 e0f1                      				LDI ZH, 0x01
+000141 e410                      				LDI R17, 64
+000142 9101                      				READ65TH_LOOP: LD R16, Z+
+000143 951a                      					  DEC R17
+000144 f7e9                      					  BRNE READ65TH_LOOP
+                                 				
+000145 9508                      				RET
+                                 				   		    
+000146 e518                      DISPLAY_INTERMEDIATE_STATE: LDI R17, 88
+000147 982b                      				   CBI PORTB, 3
+000148 982d                      				   SEND_DATA: CBI PORTB, 5
+000149 9a2d                      							  SBI PORTB, 5
+00014a 951a                      							  DEC R17
+00014b f7e1                      							  BRNE SEND_DATA
+00014c 982c                      					CBI PORTB, 4
+00014d 9a2c                      					SBI PORTB, 4
+00014e 982c                      					CBI PORTB, 4
                                  					
                                  				  
-000105 9508                      					RET
+00014f 9508                      					RET
                                  				   
                                  
-000106 9160 0212                 InitScreenState: LDS R22,  0x212
-000108 9361                      				 ST Z+, R22
+000150 9160 0212                 InitScreenState: LDS R22,  0x212
+000152 9361                      				 ST Z+, R22
                                  
-000109 e060                      				LDI R22, 0x00
-00010a e014                      				LDI R17, 4
+000153 e060                      				LDI R22, 0x00
+000154 e014                      				LDI R17, 4
                                  
-00010b 9361                      				LOOP_BUFF: ST Z+, R22
-00010c 951a                      						   DEC R17
-00010d f7e9                      						   BRNE LOOP_BUFF
+000155 9361                      				LOOP_BUFF: ST Z+, R22
+000156 951a                      						   DEC R17
+000157 f7e9                      						   BRNE LOOP_BUFF
                                  
-00010e 9160 0213                 				LDS R22, 0x213
-000110 9361                      				ST Z+, R22
+000158 9160 0213                 				LDS R22, 0x213
+00015a 9361                      				ST Z+, R22
                                  
-000111 e060                      				LDI R22, 0x00
-000112 e013                      				LDI R17, 3
+00015b e060                      				LDI R22, 0x00
+00015c e013                      				LDI R17, 3
                                  
-000113 9361                      				LOOP_BUFF1_: ST Z+, R22
-000114 951a                      						   DEC R17
-000115 f7e9                      						   BRNE LOOP_BUFF1_
+00015d 9361                      				LOOP_BUFF1_: ST Z+, R22
+00015e 951a                      						   DEC R17
+00015f f7e9                      						   BRNE LOOP_BUFF1_
                                  		   
-000116 9160 0214                 				LDS R22, 0x214
-000118 9361                      				ST Z+, R22
+000160 9160 0214                 				LDS R22, 0x214
+000162 9361                      				ST Z+, R22
                                  
-000119 9508                      				RET ; Return to caller
+000163 9508                      				RET ; Return to caller
                                  
-00011a e700                      CONTEXT_SWITCH: LDI R16, 0b01110000  ; Copy 0b1111 0000 to R16
-00011b e81f                      			    LDI R17, 0b10001111  ; Copy 0b0000 1111 to R17
-                                 
-                                 
-                                 
-00011c b90b                      			    OUT PORTD, R16 ; Set PORTD to R16
-00011d b91a                      	            OUT DDRD, R17  ; Set DDRD to R17  	
-00011e 9508                      			    RET ; Return to caller
-                                 
-00011f e80f                      RESET_CONTEXT: LDI R16, 0b10001111 ; keyboard set
-000120 e710                      			   LDI R17, 0b01110000
-                                 
-000121 b90b                      			   OUT PORTD, R16
-000122 b91a                      		       OUT DDRD, R17
-000123 9508                      			   RET ; Return to caller
+000164 e700                      CONTEXT_SWITCH: LDI R16, 0b01110000  ; Copy 0b1111 0000 to R16
+000165 e81f                      			    LDI R17, 0b10001111  ; Copy 0b0000 1111 to R17
                                  
                                  
                                  
-000124 9a42                      DISPLAY: SBI PORTC, 2 ; test
-000125 e04a                            LDI R20, 10 ; 10 bytes per row 
-000126 e028                      	  LOAD_BYTE: LDI R18, 8 ;Iteration variable, 8 bits to serially shift
-000127 9101                      			     LD R16, Z+ ; Read from loacation pointed by z and auto-increment z
-000128 9488                      			     CLC ; Clear carry bit
+000166 b90b                      			    OUT PORTD, R16 ; Set PORTD to R16
+000167 b91a                      	            OUT DDRD, R17  ; Set DDRD to R17  	
+000168 9508                      			    RET ; Return to caller
                                  
-000129 9a2b                      	   SEND_BYTE_COL: SBI PORTB,3 ; Clear column data input
-00012a 9507                      				  ROR R16
-00012b f008                      				  BRCS CARRY_ISONE
-00012c 982b                      				  CBI PORTB,3
-00012d 982d                      				  CARRY_ISONE: CBI PORTB,5 ; clock edge
-00012e 9a2d                      							   SBI PORTB,5
-00012f 952a                      				  DEC R18
-000130 f7c1                      				  BRNE SEND_BYTE_COL
+000169 e80f                      RESET_CONTEXT: LDI R16, 0b10001111 ; keyboard set
+00016a e710                      			   LDI R17, 0b01110000
                                  
-000131 954a                      	   DEC R20
-000132 f799                      	   BRNE LOAD_BYTE ; load next byte
+00016b b90b                      			   OUT PORTD, R16
+00016c b91a                      		       OUT DDRD, R17
+00016d 9508                      			   RET ; Return to caller
+                                 
+                                 
+                                 
+00016e 9a42                      DISPLAY: SBI PORTC, 2 ; test
+00016f e04a                            LDI R20, 10 ; 10 bytes per row 
+000170 e028                      	  LOAD_BYTE: LDI R18, 8 ;Iteration variable, 8 bits to serially shift
+000171 9101                      			     LD R16, Z+ ; Read from loacation pointed by z and auto-increment z
+000172 9488                      			     CLC ; Clear carry bit
+                                 
+000173 9a2b                      	   SEND_BYTE_COL: SBI PORTB,3 ; Clear column data input
+000174 9507                      				  ROR R16
+000175 f008                      				  BRCS CARRY_ISONE
+000176 982b                      				  CBI PORTB,3
+000177 982d                      				  CARRY_ISONE: CBI PORTB,5 ; clock edge
+000178 9a2d                      							   SBI PORTB,5
+000179 952a                      				  DEC R18
+00017a f7c1                      				  BRNE SEND_BYTE_COL
+                                 
+00017b 954a                      	   DEC R20
+00017c f799                      	   BRNE LOAD_BYTE ; load next byte
                                  	  
                                  		   
-000133 e028                      	   LDI R18, 8
-000134 2f95                      	   MOV R25, R21
-000135 9488                             CLC
-000136 982b                      	   SEND_BYTE_ROW: CBI PORTB,3 ; clear data input
-000137 1f99                      					   ROL R25
-000138 f408                      					   BRCC _CARRY_ISZERO
-000139 9a2b                      					   SBI PORTB,3 ; set data input
-00013a 982d                      					   _CARRY_ISZERO: CBI PORTB,5 ; clock edge
-00013b 9a2d                      									 SBI PORTB,5
-00013c 952a                      					   DEC R18
-00013d f7c1                      					   BRNE SEND_BYTE_ROW
+00017d e028                      	   LDI R18, 8
+00017e 2f95                      	   MOV R25, R21
+00017f 9488                             CLC
+000180 982b                      	   SEND_BYTE_ROW: CBI PORTB,3 ; clear data input
+000181 1f99                      					   ROL R25
+000182 f408                      					   BRCC _CARRY_ISZERO
+000183 9a2b                      					   SBI PORTB,3 ; set data input
+000184 982d                      					   _CARRY_ISZERO: CBI PORTB,5 ; clock edge
+000185 9a2d                      									 SBI PORTB,5
+000186 952a                      					   DEC R18
+000187 f7c1                      					   BRNE SEND_BYTE_ROW
                                  	
                                  
-00013e 982c                      	CBI PORTB,4 ; latch data to output
-00013f 9a2c                      	SBI PORTB,4
-000140 9ba8                      	AWAIT: SBIS TIFR0, TOV0 ; Delay
-000141 cffe                      		   RJMP AWAIT
+000188 982c                      	CBI PORTB,4 ; latch data to output
+000189 9a2c                      	SBI PORTB,4
+00018a 9ba8                      	AWAIT: SBIS TIFR0, TOV0 ; Delay
+00018b cffe                      		   RJMP AWAIT
                                  	
                                  	;CLC
-000142 0f55                      	LSL R21 ; shift to next row
-000143 3850                      	CPI R21, 0x80
-000144 f6f9                      	BRNE DISPLAY
+00018c 0f55                      	LSL R21 ; shift to next row
+00018d 3850                      	CPI R21, 0x80
+00018e f6f9                      	BRNE DISPLAY
                                  	
-000145 e051                      	LDI R21, 0x01 ; reset to first row again
-000146 e0e0                      	  LDI ZL, 0x00
-000147 e0f1                      	  LDI ZH, 0x01
-000148 e2a0                      	  LDI XL, 0x20
-000149 e0b2                      	  LDI XH, 0x02
+00018f e051                      	LDI R21, 0x01 ; reset to first row again
+000190 e0e0                      	  LDI ZL, 0x00
+000191 e0f1                      	  LDI ZH, 0x01
+000192 e2a0                      	  LDI XL, 0x20
+000193 e0b2                      	  LDI XH, 0x02
                                  
-00014a 9508                      	RET
+000194 9508                      	RET
                                  
-00014b ef0d                      TimerInterrupt: LDI R16, 253
-00014c bd06                      				OUT TCNT0,R16
-00014d 982c                      				CBI PORTB, 4
-00014e 9518                      				RETI
+                                 SHOOT_BOSS: 
+000195 ebc4                      			LDI YL, 0xB4
+000196 e0d8                      			LDI YH, 0x08
+                                 
+000197 e0e0                      			LDI ZL, 0x00
+000198 e0f1                      			LDI ZH, 0x01
+                                 
+000199 e0aa                      			LDI R26, 10 ; 5 gun locations
+00019a e129                      			LDI R18, 25 ; Start at 35
+                                 
+00019b e800                      			Bshootloop: LDI R16, 0x80
+                                 		 	; -------- FIND WHERE THE GUN IS ---
+00019c d05e                      			RCALL SHIFT_Z
+00019d 8110                      			LD R17, Z
+00019e 3f19                      			CPI R17, MonsterGunPat
+                                 			 
+00019f c006                      			RJMP BFIRE
+                                 			;------ MOVE TO NEXT PATH ------
+0001a0 e0ba                      			LDI R27, 10
+0001a1 0f2b                      			ADD R18, R27
+0001a2 e0e0                      			LDI ZL, 0x00
+0001a3 91e9                      			LD R30, Y+
+0001a4 95aa                      			DEC R26
+0001a5 f7a9                      			BRNE Bshootloop
+                                 
+0001a6 e000                      			BFIRE:  LDI R16, 0x00
+0001a7 8118                      					LD R17, Y
+0001a8 e010                      				    LDI R17, 0x00
+0001a9 9319                      				  SHOOT1: ST Y+, R17
+                                 
+                                 
+0001aa 9508                      		  BEND_SHOOTING : RET
+                                 			
+                                 
+                                 SHIP_SHOOT: 
+                                 	    ; -------------- START SHOOTING -------------------
+                                 
+                                 		; -------------- -----------FIRST BLOC ------------------------------------------
+0001ab ebc0                      		    LDI YL, 0xB0
+0001ac e0d8                      			LDI YH, 0x08
+                                 
+0001ad e0e0                      			LDI ZL, 0x00
+0001ae e0f1                      			LDI ZH, 0x01
+                                 
+0001af e0a2                      			LDI R26, 2 ; 5 gun locations
+0001b0 e321                      			LDI R18, 49 ; Start at 30, to check the location of the gun
+                                 
+0001b1 e800                      			shootloop: LDI R16, 0x80
+                                 		 				; -------- FIND WHERE THE GUN IS ---
+0001b2 d048                      						RCALL SHIFT_Z
+0001b3 8110                      						LD R17, Z
+0001b4 311f                      						CPI R17, ShipGun
+                                 			 
+0001b5 f0a1                      						BREQ FIRE
+                                 						;------ MOVE TO NEXT PATH ------
+0001b6 e0ba                      						LDI R27, 10
+0001b7 0f2b                      						ADD R18, R27
+0001b8 e0e0                      						LDI ZL, 0x00
+0001b9 91e9                      						LD R30, Y+
+0001ba 95aa                      						DEC R26
+0001bb f7a9                      						BRNE shootloop
+                                 
+                                 			; -------------- -----------SECOND BLOC ------------------------------------------
+                                 			
+0001bc e0a2                      			LDI R26, 2 ; 5 gun locations
+0001bd e02e                      			LDI R18, 14 ; Start at 5, to check the location of the gun
+                                 
+0001be e800                      			shootloop2: LDI R16, 0x80
+                                 		 				; ------ FIND WHERE THE GUN IS ----
+0001bf d03b                      						RCALL SHIFT_Z
+0001c0 8110                      						LD R17, Z
+0001c1 311f                      						CPI R17, ShipGun 
+0001c2 f039                      						BREQ FIRE
+                                 						;------ MOVE TO NEXT PATH ----------
+0001c3 e0ba                      						LDI R27, 10
+0001c4 0f2b                      						ADD R18, R27
+0001c5 e0e0                      						LDI ZL, 0x00
+0001c6 91e9                      						LD R30, Y+
+0001c7 95aa                      						DEC R26
+0001c8 f7a9                      						BRNE shootloop2
+0001c9 c002                      						RJMP END_SHOOTING
+                                 			; --------------------------- FIRE -------------------------
+0001ca e800                      			FIRE: LDI R16, 0x80
+0001cb 8308                      				  ST Y, R16
+                                 
+0001cc 9508                      		  END_SHOOTING : RET
+0001cd 9a3b                      		  test: SBI DDRC, 3
+0001ce 9843                      				CBI PORTC,3
+                                 
+                                 
+                                 
+0001cf ebc0                      UPDATE_STATE: LDI YL, 0xB0
+0001d0 e0d8                      			 LDI YH, 0x08 
+0001d1 e0e0                      			 LDI ZL, 0x00
+0001d2 e0f1                      			 LDI ZH, 0x01
+                                 		
+                                 		; ---------------------------------------FIRST BLOC ----------------------------
+0001d3 e032                             LDI R19, 2 ; 5 BULLET PATHS
+0001d4 e320                             LDI R18, 48 ; FIRST PATH ADDRESS
+                                 
+0001d5 d025                             TRACE_BULLET: RCALL SHIFT_Z
+0001d6 d03f                                     RCALL BULLET_PATH
+0001d7 e09a                                     LDI R25, 10
+0001d8 0f29                                     ADD R18, R25
+                                 
+0001d9 e0e0                                     LDI ZL, 0x00
+0001da 953a                                     DEC  R19
+0001db f7c9                                     BRNE TRACE_BULLET
+                                 
+                                 
+0001dc e0e0                             LDI ZL, 0x00
+0001dd e0f1                             LDI ZH, 0x01
+                                 
+                                 
+                                       ; ----------------- --------------SECOND BLOC -------------------------------------------
+                                    
+0001de e0e0                            LDI ZL, 0x00
+0001df e032                            LDI R19, 2 ; 10 BULLET PATHS
+0001e0 e02d                            LDI R18, 13 ; FIRST PATH ADDRESS
+                                 
+0001e1 d019                             TRACE_BULLET2: RCALL SHIFT_Z
+0001e2 d033                                     RCALL BULLET_PATH
+0001e3 e09a                                     LDI R25, 10
+0001e4 0f29                                     ADD R18, R25
+                                 
+0001e5 e0e0                                     LDI ZL, 0x00
+0001e6 953a                                     DEC  R19
+0001e7 f7c9                                     BRNE TRACE_BULLET2
+                                 
+                                 	  ; -------------------- BOSS BULLETS -----------------------
+                                        ;-------------- FIRST BLOC ----------------------
+0001e8 e0e0                             LDI ZL, 0x00
+0001e9 e032                             LDI R19, 2 ; 5 BULLET PATHS
+0001ea e12a                             LDI R18, 26 ; FIRST PATH ADDRESS
+                                 
+0001eb d00f                             BTRACE_BULLET: RCALL SHIFT_Z
+0001ec d017                                     RCALL BOSSBULLET_PATH
+0001ed e09a                                     LDI R25, 10
+0001ee 0f29                                     ADD R18, R25
+                                 
+0001ef e0e0                                     LDI ZL, 0x00
+0001f0 953a                                     DEC  R19
+0001f1 f7c9                                     BRNE BTRACE_BULLET
+                                 
+0001f2 ebc0                            LDI YL, 0xB0
+0001f3 e0d8                             LDI YH, 0x08
+                                 
+0001f4 e000                             LDI R16, 0x00
+0001f5 e114                             LDI R17, 20
+0001f6 9309                             RESET: ST Y+, R16
+0001f7 951a                                DEC R17
+0001f8 f7e9                                BRNE RESET
+                                 
+0001f9 d030                      			 RCALL BULLET_DELAY
+0001fa 9508                      			 RET
+                                 
+0001fb 0000                      SHIFT_Z:  NOP
+0001fc 9320 0260                 		  STS 0x260, R18
+0001fe 9190 0260                 		  LDS R25, 0x260
+000200 95e3                      			SHIFT:  INC ZL
+000201 959a                      					DEC R25
+000202 f7e9                      					BRNE SHIFT
+000203 9508                      			RET
+                                 
+                                 
+000204 8100                      BOSSBULLET_PATH: LD R16, Z
+000205 9119                      			  LD R17, Y+
+000206 2b01                      			  OR R16, R17
+                                 
+000207 0f00                      			  LSL R16
+000208 9301                      			  ST Z+, R16
+000209 f410                      			BRCC BNextByte
+                                 
+00020a e001                      			LDI R16, 0x01
+00020b 8300                      			ST Z, R16
+                                 
+00020c 8100                      			BNextByte: LD R16, Z
+00020d 0f00                      					LSL R16
+00020e 9301                      					ST Z+, R16
+00020f f410                      			BRCC BNextByte2
+                                 
+000210 e001                      			LDI R16, 0x01
+000211 8300                      			ST Z, R16
+                                 			
+000212 8100                      		BNextByte2: LD R16, Z
+000213 0f00                      					LSL R16
+000214 8300                      					ST Z, R16
+                                 
+                                 
+000215 9508                      			  RET
+                                 
+000216 8100                      BULLET_PATH:  LD R16, Z
+000217 9119                      			  LD R17, Y+
+000218 2b01                      			  OR R16, R17
+                                 
+000219 9506                      			  LSR R16
+00021a 8300                      			  ST Z, R16	  
+00021b 95ea                      			  DEC ZL
+00021c f410                      			  BRCC NextByte
+                                 
+00021d e800                      			LDI R16, 0x80
+00021e 8300                      			ST Z, R16
+                                 
+00021f 8100                      			NextByte:  LD R16, Z
+000220 9506                      					LSR R16
+000221 8300                      					ST Z, R16
+000222 95ea                      					DEC ZL
+000223 f410                      			BRCC NextByte2
+                                 
+000224 e800                      			LDI R16, 0x80
+000225 8300                      			ST Z, R16
+                                 			
+000226 8100                      		NextByte2: LD R16, Z
+000227 9506                      					LSR R16
+000228 8300                      					ST Z, R16
+                                 			  
+000229 9508                      			  RET
+                                 
+00022a e04f                      BULLET_DELAY: LDI R20, 0x0F
+00022b 0000                      	BLOOP:  NOP
+00022c efcf                      		LDI R28, 0xFF
+00022d 0000                      		BNESTED: NOP
+00022e 95ca                      				DEC R28
+00022f f7e9                      				BRNE BNESTED
+000230 954a                      	DEC R20
+000231 f7c9                      	BRNE BLOOP
+000232 9508                      	RET
+                                 
+000233 ef0a                      TimerInterrupt: LDI R16, 250
+000234 bd06                      				OUT TCNT0,R16
+000235 982c                      				CBI PORTB, 4
+000236 9518                      				RETI
                                  
 
 
@@ -1462,39 +1819,39 @@ counted separately from r26..r31 here.
 .dseg memory usage only counts static data declared with .byte
 
 "ATmega328P" register use summary:
-x  :  29 y  :   0 z  :  38 r0 :   0 r1 :   0 r2 :   0 r3 :   0 r4 :   0 
+x  :  40 y  :   9 z  :  71 r0 :   0 r1 :   0 r2 :   0 r3 :   0 r4 :   0 
 r5 :   0 r6 :   0 r7 :   0 r8 :   0 r9 :   0 r10:   0 r11:   0 r12:   0 
-r13:   0 r14:   0 r15:   0 r16: 124 r17:  20 r18:   7 r19:   2 r20:   4 
-r21:   7 r22:  10 r23:   1 r24:   0 r25:   2 r26:   3 r27:   3 r28:   2 
-r29:   2 r30:   9 r31:   9 
-Registers used: 17 out of 35 (48.6%)
+r13:   0 r14:   0 r15:   0 r16: 188 r17:  31 r18:  22 r19:   8 r20:   6 
+r21:   9 r22:  10 r23:   1 r24:   0 r25:  10 r26:  11 r27:  10 r28:   9 
+r29:   7 r30:  35 r31:  21 
+Registers used: 18 out of 35 (51.4%)
 
 "ATmega328P" instruction use summary:
-.lds  :   0 .sts  :   0 adc   :   0 add   :   0 adiw  :   0 and   :   0 
+.lds  :   0 .sts  :   0 adc   :   0 add   :   6 adiw  :   0 and   :   0 
 andi  :   0 asr   :   0 bclr  :   0 bld   :   0 brbc  :   0 brbs  :   0 
-brcc  :   1 brcs  :   1 break :   0 breq  :   1 brge  :   0 brhc  :   0 
+brcc  :   5 brcs  :   1 break :   0 breq  :   7 brge  :   0 brhc  :   0 
 brhs  :   0 brid  :   0 brie  :   0 brlo  :   0 brlt  :   0 brmi  :   0 
-brne  :  14 brpl  :   0 brsh  :   0 brtc  :   0 brts  :   0 brvc  :   0 
-brvs  :   0 bset  :   0 bst   :   0 call  :   7 cbi   :  11 cbr   :   0 
+brne  :  22 brpl  :   0 brsh  :   0 brtc  :   0 brts  :   0 brvc  :   0 
+brvs  :   0 bset  :   0 bst   :   0 call  :   9 cbi   :  13 cbr   :   0 
 clc   :   2 clh   :   0 cli   :   0 cln   :   0 clr   :   0 cls   :   0 
 clt   :   0 clv   :   0 clz   :   0 com   :   0 cp    :   0 cpc   :   0 
-cpi   :   2 cpse  :   0 dec   :  13 eor   :   0 fmul  :   0 fmuls :   0 
-fmulsu:   0 icall :   0 ijmp  :   0 in    :   2 inc   :   0 jmp   :   0 
-ld    :  21 ldd   :  12 ldi   :  78 lds   :   3 lpm   :   0 lsl   :   1 
-lsr   :   0 mov   :   1 movw  :   0 mul   :   0 muls  :   0 mulsu :   0 
-neg   :   0 nop   :   3 or    :   1 ori   :   0 out   :  11 pop   :   0 
-push  :   0 rcall :   4 ret   :   5 reti  :   1 rjmp  :   7 rol   :   1 
-ror   :   1 sbc   :   0 sbci  :   0 sbi   :  10 sbic  :   0 sbis  :   1 
+cpi   :   9 cpse  :   0 dec   :  23 eor   :   0 fmul  :   0 fmuls :   0 
+fmulsu:   0 icall :   0 ijmp  :   0 in    :   2 inc   :   2 jmp   :   0 
+ld    :  47 ldd   :  13 ldi   : 155 lds   :   4 lpm   :   0 lsl   :   4 
+lsr   :   3 mov   :   1 movw  :   0 mul   :   0 muls  :   0 mulsu :   0 
+neg   :   0 nop   :   6 or    :   3 ori   :   0 out   :  11 pop   :   0 
+push  :   0 rcall :  27 ret   :  16 reti  :   1 rjmp  :  10 rol   :   1 
+ror   :   1 sbc   :   0 sbci  :   0 sbi   :  11 sbic  :   0 sbis  :   1 
 sbiw  :   0 sbr   :   0 sbrc  :   0 sbrs  :   0 sec   :   0 seh   :   0 
 sei   :   1 sen   :   0 ser   :   0 ses   :   0 set   :   0 sev   :   0 
-sez   :   0 sleep :   0 spm   :   0 st    :  22 std   :  12 sts   :  22 
+sez   :   0 sleep :   0 spm   :   0 st    :  36 std   :  24 sts   :  23 
 sub   :   0 subi  :   0 swap  :   0 tst   :   0 wdr   :   0 
-Instructions used: 31 out of 113 (27.4%)
+Instructions used: 34 out of 113 (30.1%)
 
 "ATmega328P" memory use summary [bytes]:
 Segment   Begin    End      Code   Data   Used    Size   Use%
 ---------------------------------------------------------------
-[.cseg] 0x000000 0x00029e    608      0    608   32768   1.9%
+[.cseg] 0x000000 0x00046e   1072      0   1072   32768   3.3%
 [.dseg] 0x000100 0x000100      0      0      0    2048   0.0%
 [.eseg] 0x000000 0x000000      0      0      0    1024   0.0%
 
