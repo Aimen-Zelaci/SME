@@ -3,9 +3,8 @@
 .org 0x0000
 rjmp init
 
-.org 0x0020
+.org 0x001A
 rjmp TimerInterrupt
-
 
 
 .EQU MonsterNotGunPat = 0b11111001
@@ -40,20 +39,18 @@ init: SBI DDRC, 2
 	  LDI ZL, 0x00
 	  LDI ZH, 0x01
 
-
-	 LDI R16, HIGH(RAMEND)
-	 OUT SPH, R16
-	 LDI R16, LOW(RAMEND)
-	 OUT SPL, R16
-
 	 SEI ;Set I bit to 1
 	
 	 LDI R16, 0x01
-	 STS TIMSK0, R16 ;timer0 interrupt enable
+	 STS TIMSK1, R16 ;timer0 interrupt enable
 
- 	 LDI R16, 0x05
-	 OUT TCCR0B, R16 ;prescaler 1024
-
+ 	 LDI R16, 0x04
+	 STS TCCR1B, R16 ;prescaler 
+ 	 
+	 LDI R16, HIGH(RAMEND) ; init stack
+	 OUT SPH, R16
+	 LDI R16, LOW(RAMEND)
+	 OUT SPL, R16
 
 
 ; 1ST ROW
@@ -130,6 +127,7 @@ LDI R23, 0x01
 
 LDI YL, 0xB0
 LDI YH, 0x08
+LDI R24, 6 ; Counting variable for boss shooting
 
 main: CALL DISPLAY
 	  CALL UPDATE_STATE
@@ -152,8 +150,6 @@ CHECK_STATE: IN R18,PIND ; Copy PIND into R18
 
 		     CPI R18,BTNA_PATTERN ; If button A is pressed
 		     BREQ SHOOT
-
-			 RCALL SHOOT_BOSS
 
 		     LDI R21, 0x01 ; reset to first row again
 		     LDI ZL, 0x00
@@ -521,9 +517,16 @@ DISPLAY: SBI PORTC, 2 ; test
 	
 
 	CBI PORTB,4 ; latch data to output
+	LDI R16, 0xFE
+	AWAIT: NOP
+		   DEC R16
+		   BRNE AWAIT
 	SBI PORTB,4
-	AWAIT: SBIS TIFR0, TOV0 ; Delay
-		   RJMP AWAIT
+	LDI R16, 0xFE
+	AWAIT2: NOP
+		   DEC R16
+		   BRNE AWAIT2
+	CBI PORTB, 4
 	
 	;CLC
 	LSL R21 ; shift to next row
@@ -538,38 +541,9 @@ DISPLAY: SBI PORTC, 2 ; test
 
 	RET
 
-SHOOT_BOSS: 
-			LDI YL, 0xB4
-			LDI YH, 0x08
-
-			LDI ZL, 0x00
-			LDI ZH, 0x01
-
-			LDI R26, 10 ; 5 gun locations
-			LDI R18, 25 ; Start at 35
-
-			Bshootloop: LDI R16, 0x80
-		 	; -------- FIND WHERE THE GUN IS ---
-			RCALL SHIFT_Z
-			LD R17, Z
-			CPI R17, MonsterGunPat
-			 
-			RJMP BFIRE
-			;------ MOVE TO NEXT PATH ------
-			LDI R27, 10
-			ADD R18, R27
-			LDI ZL, 0x00
-			LD R30, Y+
-			DEC R26
-			BRNE Bshootloop
-
-			BFIRE:  LDI R16, 0x00
-					LD R17, Y
-				    LDI R17, 0x00
-				  SHOOT1: ST Y+, R17
-
-
-		  BEND_SHOOTING : RET
+SHOOT_BOSS: LDI R16, 0x01
+			ST Y, R16
+		   RET
 			
 
 SHIP_SHOOT: 
@@ -670,7 +644,7 @@ UPDATE_STATE: LDI YL, 0xB0
 	  ; -------------------- BOSS BULLETS -----------------------
        ;-------------- FIRST BLOC ----------------------
        LDI ZL, 0x00
-       LDI R19, 2 ; 5 BULLET PATHS
+       LDI R19, 2 ; 2 BULLET PATHS
        LDI R18, 26 ; FIRST PATH ADDRESS
 
        BTRACE_BULLET: RCALL SHIFT_Z
@@ -681,6 +655,51 @@ UPDATE_STATE: LDI YL, 0xB0
                LDI ZL, 0x00
                DEC  R19
                BRNE BTRACE_BULLET
+
+	 LDI ZL, 0x00
+       LDI R19, 1 ; 2 BULLET PATHS
+       LDI R18, 66 ; FIRST PATH ADDRESS
+
+       BTRACE_BULLET2: RCALL SHIFT_Z
+               RCALL BOSSBULLET_PATH
+               LDI R25, 10
+               ADD R18, R25
+
+               LDI ZL, 0x00
+               DEC  R19
+               BRNE BTRACE_BULLET2
+
+
+	; -------------------- BOSS BULLETS -----------------------
+       ;-------------- SECOND BLOC ----------------------
+       LDI ZL, 0x00
+       LDI R19, 1 ; 2 BULLET PATHS
+       LDI R18, 1 ; FIRST PATH ADDRESS
+
+       BTRACE_BULLET3: RCALL SHIFT_Z
+               RCALL BOSSBULLET_PATH
+               LDI R25, 10
+               ADD R18, R25
+
+               LDI ZL, 0x00
+               DEC  R19
+               BRNE BTRACE_BULLET3
+
+
+			   LDI ZL, 0x00
+
+       LDI R19, 2 ; 2 BULLET PATHS
+       LDI R18, 31 ; FIRST PATH ADDRESS
+
+       BTRACE_BULLET4: RCALL SHIFT_Z
+               RCALL BOSSBULLET_PATH
+               LDI R25, 10
+               ADD R18, R25
+
+               LDI ZL, 0x00
+               DEC  R19
+               BRNE BTRACE_BULLET4
+
 
       LDI YL, 0xB0
        LDI YH, 0x08
@@ -756,7 +775,7 @@ BULLET_PATH:  LD R16, Z
 			  
 			  RET
 
-BULLET_DELAY: LDI R20, 0x0F
+BULLET_DELAY: LDI R20, 0xAF
 	BLOOP:  NOP
 		LDI R28, 0xFF
 		BNESTED: NOP
@@ -766,8 +785,65 @@ BULLET_DELAY: LDI R20, 0x0F
 	BRNE BLOOP
 	RET
 
-TimerInterrupt: LDI R16, 250
-				OUT TCNT0,R16
-				CBI PORTB, 4
-				RETI
+TimerInterrupt: LDI R16, 0xFF
+				LDI R17, 0XCF
+				STS TCNT1L,R16
+				STS TCNT1H,R17
+				
+				LDI YH, 0x08
+
+				CPI R24, 6
+				BREQ lastPat 
+
+				CPI R24, 5
+				BREQ fifthPat 
+
+				CPI R24, 4
+				BREQ fourthPat 
+
+				CPI R24, 3
+				BREQ thirdPat 
+
+				CPI R24, 2
+				BREQ secondPat 
+
+		
+				CPI R24, 0x00
+				BREQ firstPat 
+				
+				 DEC R24
+				 RETI
+
+
+				firstPat: LDI YL, 0xB4
+						  LDI R24, 6
+						  RCALL SHOOT_BOSS
+						RETI
+
+				secondPat: LDI YL, 0xB5
+						  DEC R24
+						  RCALL SHOOT_BOSS
+						RETI
+				thirdPat: LDI YL, 0xB6
+						  DEC R24
+						  RCALL SHOOT_BOSS
+						RETI
+
+				fourthPat: LDI YL, 0xB7
+						  DEC R24
+						  RCALL SHOOT_BOSS
+						RETI
+
+				fifthPat: LDI YL, 0xB8
+						  DEC R24
+						  RCALL SHOOT_BOSS
+						RETI
+
+				lastPat: LDI YL, 0xB9
+						  DEC R24
+						  RCALL SHOOT_BOSS
+						RETI
+
+
+
 
