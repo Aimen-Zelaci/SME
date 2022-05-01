@@ -39,9 +39,16 @@ RJMP Init ; First instruction that is executed by the microcontroller
 .EQU NOBTN_PATTERN =  0b11111111 ; No button preesed pattern
 .EQU OTHER_PATTERN = 0b00110011 ; Pattern for the rest of the buttons
 
+; Interrupts
+.ORG 0x0006
+rjmp JoystickInterrupt
+
 .org 0x001A
 rjmp TimerInterrupt
 
+
+.ORG 0x0020
+rjmp Timer0interrupt
 Init: 
 ; Configure output pin PB3
 SBI DDRB, 3 ; Pin PB3 is an output: Data pin SDI (Serial Data In)
@@ -53,7 +60,7 @@ CBI DDRB,2;	pin an input switch
 SBI PORTB,2;Enable the pull-up resistor
 
 ;enabling keyboard input
- LDI R16, 0x0F
+LDI R16, 0x0F
 LDI R17, 0xF0
 OUT DDRD, R17 
 OUT PORTD, R16 ; Init keyboard. set all rows to ground and cols to 1 
@@ -70,22 +77,28 @@ LDI LAST_KEY, 0x00
 ;CALL init_screen
 CALL Load_game_play_start
 
-SEI ;Set I bit to 1
-	
-LDI R16, 0x01
-STS TIMSK1, R16 ;timer1 interrupt enable
+SEI ;Set golabl interrupt
+; timerinterrupt	/* Timer interrupt enabled inside machine state*/
 
 LDI R16, 0x04
-STS TCCR1B, R16 ;prescaler 
+STS TCCR1B, R16 ;prescaler timer 1
+LDI R16, 0x05
+OUT TCCR0B, R16 ;prescaler timer 0
+ 
+; Joystick interrupt
+LDI R16, 0x01
+LDI R17, 4
+STS PCICR, R16
+STS PCMSK0, R17
 
 ; INIT BOSS ACTIVE GUN COUNTER = it has 6 guns
 LDI BOSS_SHIPCOUNTER, 6
 
 ;Main Function
-Main:
-	CALL display
-	CALL state_machine_update
+Main: CALL display
+	;CALL state_machine_update
 	CALL load_screen_state
+	LDI LAST_JOY, 0x00
 	SBI PORTC,2
 RJMP Main
 
@@ -103,27 +116,6 @@ Display:
 		DEC RowIndex
 	BRNE Send1Row
 RET
-
-state_machine_update:
-	IN R0, PINB
-	BST R0,2
-	BRTC joystick_pressed ;PB2 is 0 if JS pressed
-	RJMP joystick_not_pressed 
-
-	joystick_not_pressed:
-		SBRC LAST_JOY, 0 ;skip state change if previous JS state was same as off
-		INC STATE_MACHINE
-		LDI LAST_JOY, 0x00
-		RJMP exit_sm
-	
-	joystick_pressed:
-		SBRS LAST_JOY, 0 ;skip state change if previous JS state was same as on
-		INC STATE_MACHINE
-		LDI LAST_JOY,0x01
-		RJMP exit_sm
-
-	exit_sm:
-		RET
 
 Load_screen_state:
 	CPI STATE_MACHINE, 0x01 ;Joystick went off 
@@ -145,19 +137,32 @@ Load_screen_state:
 	State_0: ;START
 		LDI ZH, high(CharTable1<<1) 
 		LDI ZL, low(CharTable1<<1)
+
+		LDI R16, 0x00
+		STS TIMSK1, R16 ;timer1 interrupt disable
+		STS TIMSK0, R16 ; timer0 interrupt disable
 		RET
 	State_1: ;GAME PLAY
+		LDI R16, 0x01
+		STS TIMSK1, R16 ;timer1 interrupt enable
+		STS TIMSK0, R16 ; timer0 interrupt enable
+
 		CALL CHECK_STATE
-		CALL UPDATE_BULLETSTATE ; Shift bullets in each line 
-		CALL BULLET_DELAY
+		;CALL BULLET_DELAY
+
 		LDI ZH,0x01
 		LDI ZL,0x00
 		RET
 	State_2: ; GAME OVER
+		LDI R16, 0x00
+		STS TIMSK1, R16 ;timer1 interrupt disable
+		STS TIMSK0, R16 ; timer0 interrupt disable
 		LDI ZH, high(CharTable2<<1)
 		LDI ZL, low(CharTable2<<1)
 		RET	
 	Reset_state:
+	    LDI R16, 0x00
+		STS TIMSK1, R16 ;timer1 interrupt disable
 		LDI STATE_MACHINE, 0x01
 		RET			
 
@@ -769,7 +774,6 @@ execute_col_loop:
 	RET
 
 	screenbuff_display:
-
 		LDI Local_index2, 10  ;index to shift screen 80 times for every screen block
 		Col_loop4:
 			;shift 5bit Column pattern into Shift Reg
@@ -825,7 +829,7 @@ SHIFT_Z: LDI ZL, 0x0A
 			
 		    RET
 
-BULLET_DELAY: LDI Local_index1, 200
+BULLET_DELAY: LDI Local_index1, 1
 	BLOOP:  NOP
 	LDI R28, 0xFF
 		BNESTED: NOP
@@ -890,6 +894,21 @@ TimerInterrupt: LDI R16, 0xFF
 				ST X, R16
 				DEC BOSS_SHIPCOUNTER
 				RETI
+
+Timer0interrupt: LDI R17, 1
+				 OUT TCNT0,R17
+				 ;CALL DISPLAY_INTERMEDIATE_STATE
+				 CALL UPDATE_BULLETSTATE
+				 ;CBI PORTC, 2
+				 RETI
+
+JoystickInterrupt: ;CBI PORTC, 2
+				   SBRS LAST_JOY, 0 ;skip state change if previous JS state was same as on
+				   INC STATE_MACHINE
+				   LDI LAST_JOY,0x01
+				   LDI R16, 0x00
+				   OUT PCIFR, R16 ; reset
+				   RETI
 
 ;character memory table
 ;Stores >START!
