@@ -1,11 +1,28 @@
+;
+; UC GAME PROJECT
+;
+; Created: 24-04-2022 10:35:44
+; Authors : Deeksha - Aimen
+;
+
+
+; Definition file of the ATmega328P
 .INCLUDE "m328pdef.inc"
+; Boot
+.ORG 0x0000 ; 
+RJMP Init ; First instruction that is executed by the microcontroller
 
-.org 0x0000
-rjmp init
-
-.org 0x001A
-rjmp TimerInterrupt
-
+;macro
+.DEF Local_index1	= R17
+.DEF local_index2	= R18
+.DEF PAT_COL1		= R19 ;Temporary Pattern for column
+.DEF DummyReg		= R20
+.DEF STATE_MACHINE	= R21 ;Stores state of game  00 : start
+												;01 : game over
+.DEF LAST_JOY		= R22 ; Stores last state of joystick  
+.DEF RowIndex		= R23 ; Index used to count the row number
+.DEF LAST_KEY		= R24 ; global var to store state of keyboard last 
+.DEF BOSS_SHIPCOUNTER = R25 ; Current active gun index of the boss
 
 .EQU MonsterNotGunPat = 0b11111001
 .EQU MonsterGunPat = 0b11111001
@@ -13,420 +30,811 @@ rjmp TimerInterrupt
 .EQU ShipMiddle = 0b00111110
 .EQU ShipEnd = 0b0010000
 
+;keyboard patterns
 .EQU BTN8_PATTERN = 0b01111011 ; Button 8 pressed pattern
 .EQU BTN7_PATTERN = 0b01110111 ; Button 7 pressed pattern
 .EQU BTN5_PATTERN = 0b10111011 ; Button 5 pressed pattern
 .EQU BTN4_PATTERN = 0b10110111 ; Button 4 pressed pattern
-.EQU BTNA_PATTERN = 0b11100111 ; Button A pressed pattern
-.EQU BTN0_PATTERN = 0b11101110 ; Button 0 pressed pattern
-.EQU BTN1_PATTERN = 0b11010111 ; Button 1 pressed pattern
+.EQU BTN2_PATTERN = 0b11011011 ; Button 2 pressed pattern
 .EQU NOBTN_PATTERN =  0b11111111 ; No button preesed pattern
 .EQU OTHER_PATTERN = 0b00110011 ; Pattern for the rest of the buttons
 
-init: SBI DDRC, 2
-	  SBI PORTC,2
+.org 0x001A
+rjmp TimerInterrupt
 
-	  LDI R16, 0b10001111 ; keyboard set
-	  LDI R17, 0b01110000
-	  OUT DDRD, R17 
-	  OUT PORTD, R16 ; Init keyboard. set all rows to ground and cols to 1 
+Init: 
+; Configure output pin PB3
+SBI DDRB, 3 ; Pin PB3 is an output: Data pin SDI (Serial Data In)
+SBI DDRB, 4 ; Pin PB4 is an output: Latch/Output pin: LE(Latch Enable) + OE(Output Enable)
+SBI DDRB, 5 ; Pin PB5 is an output: Clock pin CLK
 
-	  LDI R16, 0xFF 
-	  OUT DDRB, R16 ; Set PORTB to out
+; Configure input joystick pin PB2
+CBI DDRB,2;	pin an input switch
+SBI PORTB,2;Enable the pull-up resistor
 
-	  LDI R21, 0x01 ; initial row
+;enabling keyboard input
+ LDI R16, 0x0F
+LDI R17, 0xF0
+OUT DDRD, R17 
+OUT PORTD, R16 ; Init keyboard. set all rows to ground and cols to 1 
 
-	  LDI ZL, 0x00
-	  LDI ZH, 0x01
+;LED 
+SBI DDRC, 2
+SBI PORTC,2
 
-	 SEI ;Set I bit to 1
+;Initializing state machine
+LDI STATE_MACHINE, 0x01
+LDI LAST_JOY, 0x00
+LDI LAST_KEY, 0x00
+
+;CALL init_screen
+CALL Load_game_play_start
+
+SEI ;Set I bit to 1
 	
-	 LDI R16, 0x01
-	 STS TIMSK1, R16 ;timer0 interrupt enable
+LDI R16, 0x01
+STS TIMSK1, R16 ;timer1 interrupt enable
 
- 	 LDI R16, 0x04
-	 STS TCCR1B, R16 ;prescaler 
- 	 
-	 LDI R16, HIGH(RAMEND) ; init stack
-	 OUT SPH, R16
-	 LDI R16, LOW(RAMEND)
-	 OUT SPL, R16
+LDI R16, 0x04
+STS TCCR1B, R16 ;prescaler 
 
+; INIT BOSS ACTIVE GUN COUNTER = it has 6 guns
+LDI BOSS_SHIPCOUNTER, 6
 
-; 1ST ROW
-LDI R16, MonsterNotGunPat
-STS 0x212, R16
-LDI R16, 0b00011111
-STS 0x213, R16
-LDI R16, ShipEnd
-STS 0x214, R16
-RCALL InitScreenState
-		
+;Main Function
+Main:
+	CALL display
+	CALL state_machine_update
+	CALL load_screen_state
+	SBI PORTC,2
+RJMP Main
 
-;2ND ROW
-SECOND_ROW: 
-LDI R16, 0b00011111
-STS 0x212, R16
-LDI R16, 0b00011111
-STS 0x213, R16
-LDI R16, ShipMiddle
-STS 0x214, R16
-CALL InitScreenState
-            
+init_screen:
+	LDI ZH, high(CharTable2<<1)
+	LDI ZL, low(CharTable2<<1)
+RET
 
+Display:
+	LDI RowIndex, 0x08 ;index for send1row
+	Send1Row:
+		CALL execute_col_loop
+		CALL execute_row_loop
+		CALL Latch_shift_reg
+		DEC RowIndex
+	BRNE Send1Row
+RET
 
-;3RD ROW
-LDI R16, 0b00011111
-STS 0x212, R16
-LDI R16, MonsterGunPat
-STS 0x213, R16
-LDI R16, ShipGun
-STS 0x214, R16
-CALL InitScreenState
+state_machine_update:
+	IN R0, PINB
+	BST R0,2
+	BRTC joystick_pressed ;PB2 is 0 if JS pressed
+	RJMP joystick_not_pressed 
 
-;4th ROW
-LDI R16, MonsterGunPat
-STS 0x212, R16
-LDI R16, MonsterNotGunPat
-STS 0x213, R16
-LDI R16, ShipMiddle
-STS 0x214, R16
-CALL InitScreenState
+	joystick_not_pressed:
+		SBRC LAST_JOY, 0 ;skip state change if previous JS state was same as off
+		INC STATE_MACHINE
+		LDI LAST_JOY, 0x00
+		RJMP exit_sm
+	
+	joystick_pressed:
+		SBRS LAST_JOY, 0 ;skip state change if previous JS state was same as on
+		INC STATE_MACHINE
+		LDI LAST_JOY,0x01
+		RJMP exit_sm
 
-;5th ROW
-LDI R16, MonsterNotGunPat
-STS 0x212, R16
-LDI R16, 0b00011111
-STS 0x213, R16
-LDI R16, ShipEnd
-STS 0x214, R16
-CALL InitScreenState
+	exit_sm:
+		RET
 
-;6th ROW
-LDI R16, 0b00011111
-STS 0x212, R16
-LDI R16, 0b00011111
-STS 0x213, R16
-LDI R16, 0b00000000
-STS 0x214, R16
-CALL InitScreenState
+Load_screen_state:
+	CPI STATE_MACHINE, 0x01 ;Joystick went off 
+	BREQ state_0 ; 
+	CPI STATE_MACHINE, 0x02 ;Joystick went off 
+	BREQ state_0 ; 	
+	CPI STATE_MACHINE, 0x03 ;Joystick went off - on - off 
+	BREQ State_1 ; game display
+	CPI STATE_MACHINE, 0x04 ;Joystick went off - on - off 
+	BREQ State_1 ; game display
+	CPI STATE_MACHINE, 0x05 ;Joystick went off - on - off - on - off
+	BREQ State_2 ; game over display
+	CPI STATE_MACHINE, 0x06 ;Joystick went off - on - off - on - off
+	BREQ State_2 ; game over display
+	CPI STATE_MACHINE, 0x07 ;Joystick went off - on - off - on - off - on - off
+	BREQ Reset_state ; reset to start display
+	RET 	
 
-; 7th ROW
-LDI R16, 0b00011111
-STS 0x212, R16
-LDI R16, MonsterGunPat
-STS 0x213, R16
-LDI R16, 0b00000000
-STS 0x214, R16
-CALL InitScreenState 
- 
-LDI ZL, 0x00 ; Reset
-LDI ZH, 0x01
-
-LDI R23, 0x01
-
-LDI YL, 0xB0
-LDI YH, 0x08
-LDI R24, 6 ; Counting variable for boss shooting
-
-main: CALL DISPLAY
-	  CALL UPDATE_STATE
-
-	RJMP CHECK_STATE
-			 
+	State_0: ;START
+		LDI ZH, high(CharTable1<<1) 
+		LDI ZL, low(CharTable1<<1)
+		RET
+	State_1: ;GAME PLAY
+		CALL CHECK_STATE
+		CALL UPDATE_BULLETSTATE ; Shift bullets in each line 
+		CALL BULLET_DELAY
+		LDI ZH,0x01
+		LDI ZL,0x00
+		RET
+	State_2: ; GAME OVER
+		LDI ZH, high(CharTable2<<1)
+		LDI ZL, low(CharTable2<<1)
+		RET	
+	Reset_state:
+		LDI STATE_MACHINE, 0x01
+		RET			
 
 
-CHECK_STATE: IN R18,PIND ; Copy PIND into R18
+CHECK_STATE: 
+			 IN R18,PIND ; Copy PIND into R18
 		     RCALL CONTEXT_SWITCH ; Call context switch (RCALL takes less instruction cycles than CALL)
 		     IN R19,PIND ; Copy PIND into R19
 		     RCALL RESET_CONTEXT ; Call reset context 
 		     OR R18,R19 ; R18 OR R19 and store the result in R18
 
-		     CPI R18,BTN4_PATTERN ; If button 4 is pressed
-		     BREQ MOVE_DOWN
-
-     		 CPI R18,BTN1_PATTERN ; If button 1 is pressed
-		     BREQ MOVE_UP
-
-		     CPI R18,BTNA_PATTERN ; If button A is pressed
-		     BREQ SHOOT
-
-		     LDI R21, 0x01 ; reset to first row again
-		     LDI ZL, 0x00
-		     LDI ZH, 0x01
-		     RJMP main
-
-SHOOT: CALL SHIP_SHOOT
-	   LDI R21, 0x01 ; reset to first row again
-	   LDI ZL, 0x00
-	   LDI ZH, 0x01
-	   RJMP main
-
-MOVE_DOWN:   
-		CBI PORTC,2 ; Turn on top led
-
-		
-	 ; --------------- MOVE TO INTERMEDIATE STATE OF THE SCREEN ---------
-			RCALL DISPLAY_INTERMEDIATE_STATE
-
-		; -------------- CHECK IF SHIP IS AT THE END ----------------
-		LDI ZL, 0x00 ; Start at 10
-		LDI ZH, 0x01
-
-		RCALL POINT65TH_BYTE ; can't read with ldd for over 63
-		LD R16, Z
-
-		CPI R16, ShipEnd
-		BREQ FinishMoveDown
-		    
-       ; --------------- COPY PARTS OF THE SHIP TO POINTER X -----------
-	   RCALL COPY_SHIP
-
-		; -------------- MOVE DOWN ------------
-
-		; ------------ FIRST ROW OF BLOCKS --------------
-		LDI ZL, 0x00 
-		LDI ZH, 0x01
-
-		LDI XL, 0x20
-		LDI XH, 0x02
-		
-		LDI R16, 0x00 ; send 0 to the first row
-		STD Z+9, R16
-		
-		LD R16, X+
-		STD Z+19, R16
-
-		LD R16, X+
-		STD Z+29, R16
-
-		LD R16, X+
-		STD Z+39, R16
-
-		LD R16, X+
-		STD Z+49, R16
-
-		LD R16, X+
-		STD Z+59, R16
-
-		RCALL POINT70TH_BYTE
-      
-	  LD R16, X+
-	  ST Z, R16
-
-	  ; ------------ SECOND ROW OF BLOCKS --------------
-	  LDI ZL, 0x00
-	  LDI ZH, 0x01
-
-	  LD R16, X+
-		STD Z+4, R16
-		
-		LD R16, X+
-		STD Z+14, R16
-
-		LD R16, X+
-		STD Z+24, R16
-
-		LD R16, X+
-		STD Z+34, R16
-
-		LD R16, X+
-		STD Z+44, R16
-
-		LD R16, X+
-		STD Z+54, R16
-
-		RCALL POINT65TH_BYTE
-      
-		LD R16, X+
-		ST Z, R16
-
-	   
-	   RCALL AWAIT_KEYRELEASE
-	   
-	  FinishMoveDown: LDI R21, 0x01 ; reset to first row again
-					  LDI ZL, 0x00
-					  LDI ZH, 0x01
-					  RJMP main
-MOVE_UP:   
-		CBI PORTC,2 ; Turn on top led
-		
-	 ; --------------- MOVE TO INTERMEDIATE STATE OF THE SCREEN ---------
-			RCALL DISPLAY_INTERMEDIATE_STATE
-
-
-		; -------------- CHECK IF SHIP IS AT THE END ----------------
-		LDI ZL, 0x00 ; Start at 10
-		LDI ZH, 0x01
-
-		LDD R16, Z+9
-
-		CPI R16, ShipEnd
-		BREQ FinishMoveUp
-		    
-       ; --------------- COPY PARTS OF THE SHIP TO POINTER X -----------
-	   RCALL COPY_SHIP
-	  
-
-		; -------------- MOVE UP ------------
-		; ------------ FIRST ROW OF BLOCKS --------------
-	  LDI ZL, 0x00
-	  LDI ZH, 0x01
-
-	  LDI XL, 0x20
-	  LDI XH, 0x02
-
-	  INC XL ;skip the first segment
-
-	  LD R16, X+
-	  STD Z+9, R16
-
-	  LD R16, X+
-	  STD Z+19, R16
-
-	  LD R16, X+
-	  STD Z+29, R16
-
-	  LD R16, X+
-	  STD Z+39, R16
-
-	  LD R16, X+
-	  STD Z+49, R16
-
-	  LD R16, X+
-	  STD Z+59, R16
-
-	  RCALL POINT70TH_BYTE
-      
-	  LD R16, X+
-	  ST Z, R16
-		
-		; ------------ SECOND ROW OF BLOCKS --------------
-		LDI ZL, 0x00
-	  LDI ZH, 0x01
-
-	  LD R16, X+
-		STD Z+4, R16
-		
-		LD R16, X+
-		STD Z+14, R16
-
-		LD R16, X+
-		STD Z+24, R16
-
-		LD R16, X+
-		STD Z+34, R16
-
-		LD R16, X+
-		STD Z+44, R16
-
-		LD R16, X+
-		STD Z+54, R16
-	
-
-	  RCALL POINT65TH_BYTE ; cant' write with std for over 63
-	  LDI R16, 0x00 
-	  ST Z, R16
-	  
-	  RCALL AWAIT_KEYRELEASE
-	   
-	  FinishMoveUp: LDI R21, 0x01 ; reset to first row again
-					  LDI ZL, 0x00
-					  LDI ZH, 0x01
-					  RJMP main
-
-COPY_SHIP: ; ------------ FIRST ROW OF BLOCKS --------------
-		LDI ZL, 0x00 ; Start at 10
-		LDI ZH, 0x01
-
-		LDI XL, 0x20
-		LDI XH, 0x02
-		
-		;LDI R16, 0x00
-		;ST X+, R16
-
-		LDD R16, Z+9
-		ST X+, R16
-
-		LDD R16, Z+19
-		ST X+, R16
-
-		LDD R16, Z+29
-		ST X+, R16
-
-		LDD R16, Z+39
-		ST X+, R16
-
-		LDD R16, Z+49
-		ST X+, R16
-
-		LDD R16, Z+59
-		ST X+, R16
-
-		RCALL POINT70TH_BYTE
-		LD R16, Z
-		ST X+, R16
-
-		; ------------ SECOND ROW OF BLOCKS --------------
-		LDI ZL, 0x00 
-		LDI ZH, 0x01
-
-		LDD R16, Z+4
-		ST X+, R16
-
-		LDD R16, Z+14
-		ST X+, R16
-
-		LDD R16, Z+24
-		ST X+, R16
-
-		LDD R16, Z+34
-		ST X+, R16
-
-		LDD R16, Z+44
-		ST X+, R16
-
-		LDD R16, Z+54
-		ST X+, R16
-
-		RCALL POINT65TH_BYTE
-		LD R16, Z
-		ST X+, R16
-
-		RET
-
-AWAIT_KEYRELEASE: DELAY: LDI R20, 0xFF
-				  LOOP:  NOP
-						LDI R28, 0xFF
-						NESTED: NOP
-								LDI R29, 0x04
-								NESTED2: NOP
-										 DEC R29
-										 BRNE NESTED2
-								DEC R28
-								BRNE NESTED
-				   DEC R20
-				   BRNE LOOP
-				   RET
-
-POINT70TH_BYTE: LDI ZL, 0x00 
-			   LDI ZH, 0x01
-			   LDI R17, 69
-			   READ70TH_LOOP: LD R16, Z+
-					  DEC R17
-					  BRNE READ70TH_LOOP
+		     CPI R18,BTN2_PATTERN ; If button 2 is pressed
+			 BREQ state_plus_2
+
+     		 CPI R18,BTN8_PATTERN ; If button 8 is pressed
+		     BREQ state_plus_8
+
+			 CPI R18,BTN5_PATTERN ; If button 5 is pressed
+		     BREQ state_plus_5
+
+
+			 CPI R18,NOBTN_PATTERN ; If no button is pressed
+			 BREQ reset_key_state
+			 RET
+
+			 state_plus_2:
+				LDI LAST_KEY, 0x02
+			 RET
+
+			 state_plus_8:
+				LDI LAST_KEY, 0x04
+			 RET
+
+			 state_plus_5:
+				LDI LAST_KEY, 0x06
+			 RET
+
+			 reset_key_state:
+				CPI LAST_KEY,0x02 ; If button 2 is pressed
+				BREQ go_down
+				CPI LAST_KEY,0x04 ; if button 8 is pressed
+				BREQ go_up
+				CPI LAST_KEY,0x06 ; if button 5 is pressed
+				BREQ ship_shoot
+			 RET
+
+			 go_down:
+				LDI LAST_KEY,0x00
+				CALL MOVE_DOWN
+			 RET
+
+			 go_up:
+				LDI LAST_KEY,0x00
+				CALL MOVE_UP
+			 RET
+
+			 ship_shoot:
+				LDI LAST_KEY,0x00
+				CALL SHOOT
+			 RET
+
+UPDATE_BULLETSTATE: LDI ZL, 0x0A
+					LDI YH, 0x02
+					LDI XH, 0x02
+
+					LDI YL, 0x50 ; Ship bullet
+					LDI XL, 0x90 ; Boss bullet	
+					
+
+				    LDI R20, 49 ; 1St upper row                   ;xxxxxxx  x  
+					CALL SHIFT_Z
+					CALL TRACE_BULLET
+
+					LDI XL, 0x93 ; BOSS GUN!
+					
+					LDI R20, 39 ; 2nd upper row                   ;xxxxxxx  x
+					CALL SHIFT_Z
+					CALL TRACE_BULLET
+
+					LDI XL, 0x96 ; BOSS GUN !
+					LDI R20, 29 ; 3rd upper row                    ;xxxxx      
+					CALL SHIFT_Z
+					CALL TRACE_BULLET
+					
+					LDI XL, 0x99 ; BOSS GUN !
+					LDI R20, 19 ; 4th upper row				     ;xxxxx 
+					CALL SHIFT_Z
+					CALL TRACE_BULLET
+
+					LDI XL, 0x9C ; BOSS GUN !
+					LDI R20, 9 ; 5th upper row				      ;xxxxxxx  x
+					CALL SHIFT_Z
+					CALL TRACE_BULLET
+
+					LDI XL, 0x9F ; BOSS GUN !
+					LDI R20, 64 ; 1St bottom row
+					CALL SHIFT_Z
+					CALL TRACE_BULLET
+
+					LDI XL, 0xA2 ; BOSS GUN !
+					LDI R20, 54 ; 2nd bottom row
+					CALL SHIFT_Z
+					CALL TRACE_BULLET
+
+					LDI XL, 0xA5 ; BOSS GUN !
+					LDI R20, 44 ; 3rd bottom row
+					CALL SHIFT_Z
+					CALL TRACE_BULLET
+
+					LDI XL, 0xA8 ; BOSS GUN !
+					LDI R20, 34 ; 4th bottom row
+					CALL SHIFT_Z
+					CALL TRACE_BULLET
+
+					LDI XL, 0xAB ; BOSS GUN !
+
+					LDI R20, 24 ; 5th bottom row
+					CALL SHIFT_Z
+					CALL TRACE_BULLET
+
+					LDI XL, 0xAE ; BOSS GUN !
+					LDI R20, 14 ; 6th bottom row
+					CALL SHIFT_Z
+					CALL TRACE_BULLET
+
+					LDI XL, 0xB1 ; BOSS GUN !
+					LDI R20, 4 ; 7th bottom row
+					CALL SHIFT_Z
+					CALL TRACE_BULLET
+							 
 			
-		        RET
+			finish_update: RET
 
-POINT65TH_BYTE:  LDI ZL, 0x00
-				LDI ZH, 0x01
-				LDI R17, 64
-				READ65TH_LOOP: LD R16, Z+
-					  DEC R17
-					  BRNE READ65TH_LOOP
-				
-				RET
-				   		    
+TRACE_BULLET: LD R16, Y
+			LD R17, X
+			; ---- check if bullets are met ----
+			CPI R16, 0x00
+			BREQ continue
+			MOV dummyReg, R16 
+			SUB dummyReg, R17
+			CPI dummyReg, 0x00
+			BREQ bullets_collapse
+			; --- continue ----
+			continue: MOV R18, R16
+			OR R18, R17
+			ST -Z, R18
+
+			LSL R17 ; shift boss bullet to the left
+			ST X+, R17
+			CLC
+			LSR R16 ; shift ship bullet to the right
+			ST Y+, R16
+
+			BRCC next ; if carry is set write to the next byte 
+			LDI R16, 0x80
+			ST Y, R16
+
+			; next byte
+			next: LD R16, Y
+				  LD R17, X
+				  MOV R18, R16
+				  OR R16, R17
+				  ST -Z, R16
+
+				  LSR R18
+				  ST Y+, R18
+				  BRCC next2
+				  LDI R16, 0x80
+				  ST Y, R16
+					; move the boss bultt to the next byte if carry is set
+				  next2:  LSL R17
+						  ST X, R17
+						  BRCC next3
+						  LDI R17, 0x01
+						  ST -X, R17
+						  INC XL
+
+					; last byte
+			  next3: INC XL		 
+					 LD R16, Y
+					 LD R17, X
+					 MOV R18, R16
+					 OR R16, R17
+					 ST -Z, R16
+
+					 LSR R18
+					 ST Y+, R18
+					 CLC
+					 LSL R17
+					 ST X, R17
+					 BRCC finish_trace ; problem here regarding X
+					 LDI R17, 0x01
+					 ST -X, R17	 ; move the boss bultt to the next byte if carry is set
+							
+							
+
+				finish_trace: RET
+				; -- if bullets collapse => reset ---
+				bullets_collapse: LDI R16, 0x00
+								  ST Y, R16
+								  ST X, R16
+								  RET
+										 
+										 		
+
+SHOOT: LDI ZL, 0x0A
+	   LDI YL, 0x50
+
+	   LDD R16, Z+49
+	   RCALL SHIP_FIRE
+
+	   LDD R16, Z+39
+	   RCALL SHIP_FIRE
+
+	   LDD R16, Z+29
+	   RCALL SHIP_FIRE
+
+	   LDD R16, Z+19
+	   RCALL SHIP_FIRE
+
+	   LDD R16, Z+9
+	   RCALL SHIP_FIRE
+
+	   
+	   LDI R20, 64 ; 1St bottom row
+	   CALL SHIFT_Z
+	   LD R16, Z
+	   RCALL SHIP_FIRE
+	   LDI ZL, 0x0A
+
+	   LDD R16, Z+54
+	   RCALL SHIP_FIRE
+
+	   LDD R16, Z+44
+	   RCALL SHIP_FIRE
+
+	   LDD R16, Z+34
+	   RCALL SHIP_FIRE
+
+	   LDD R16, Z+24
+	   RCALL SHIP_FIRE
+	   
+	   LDD R16, Z+14
+	   RCALL SHIP_FIRE
+
+	   LDD R16, Z+4
+	   RCALL SHIP_FIRE
+
+	   finish_shooting: RET
+
+SHIP_FIRE: CPI R16, ShipGun
+		   BRNE DONT_FIRE
+		   LD R16, Y
+		  LDI R17, 0x80
+		   OR R16, R17
+		   ST Y, R16
+		   DONT_FIRE: INC YL
+					   INC YL
+					  INC YL
+					  RET
+MOVE_DOWN:
+
+	LDI ZH, 0x01
+
+	LDI ZL, 0x0E ;ROW 1, lower block
+	LD PAT_COL1, Z
+	
+	LDI ZL, 0x18 ;ROW 2, lower block
+	LD DummyReg, Z
+	LDI ZL, 0x0E
+	ST Z, DummyReg
+
+	LDI ZL, 0x22 ;ROW 3, lower block
+	LD DummyReg, Z
+	LDI ZL, 0x18
+	ST Z, DummyReg
+
+	LDI ZL, 0x2C ;ROW 4, lower block
+	LD DummyReg, Z
+	LDI ZL, 0x22
+	ST Z, DummyReg
+
+	LDI ZL, 0x36 ;ROW 5, lower block
+	LD DummyReg, Z
+	LDI ZL, 0x2C
+	ST Z, DummyReg
+
+	LDI ZL, 0x40 ;ROW 6, lower block
+	LD DummyReg, Z
+	LDI ZL, 0x36
+	ST Z, DummyReg
+
+	LDI ZL, 0x4A ;ROW 7, lower block
+	LD DummyReg, Z
+	LDI ZL, 0x40
+	ST Z, DummyReg
+
+	LDI ZL, 0x13 ;ROW 1, upper block
+	LD DummyReg, Z
+	LDI ZL, 0x4A
+	ST Z, DummyReg
+
+	LDI ZL, 0x1D ;ROW 2, upper block
+	LD DummyReg, Z
+	LDI ZL, 0x13
+	ST Z, DummyReg
+
+	LDI ZL, 0x27 ;ROW 3, upper block
+	LD DummyReg, Z
+	LDI ZL, 0x1D
+	ST Z, DummyReg
+
+	LDI ZL, 0x31 ;ROW 4, upper block
+	LD DummyReg, Z
+	LDI ZL, 0x27
+	ST Z, DummyReg
+
+	LDI ZL, 0x3B ;ROW 5, upper block
+	LD DummyReg, Z
+	LDI ZL, 0x31
+	ST Z, DummyReg
+
+	LDI ZL, 0x45 ;ROW 6, upper block
+	LD DummyReg, Z
+	LDI ZL, 0x3B
+	ST Z, DummyReg
+
+	LDI ZL, 0x4F ;ROW 7, upper block
+	LD DummyReg, Z
+	LDI ZL, 0x45
+	ST Z, DummyReg
+
+	LDI ZL, 0x4F ;ROW 7, upper block
+	ST Z, PAT_COL1
+
+	;Restoring Z
+	LDI ZL, 0x00
+
+RET
+
+MOVE_UP:
+
+	LDI ZH, 0x01
+
+	LDI ZL, 0x4F ;ROW 7, upper block
+	LD PAT_COL1, Z
+	
+	LDI ZL, 0x45 ;ROW 6, upper block
+	LD DummyReg, Z
+	LDI ZL, 0x4F
+	ST Z, DummyReg
+
+	LDI ZL, 0x3B ;ROW 5, upper block
+	LD DummyReg, Z
+	LDI ZL, 0x45
+	ST Z, DummyReg
+
+	LDI ZL, 0x31 ;ROW 4, upper block
+	LD DummyReg, Z
+	LDI ZL, 0x3B
+	ST Z, DummyReg
+
+	LDI ZL, 0x27 ;ROW 3, upper block
+	LD DummyReg, Z
+	LDI ZL, 0x31
+	ST Z, DummyReg
+
+	LDI ZL, 0x1D ;ROW 2, upper block
+	LD DummyReg, Z
+	LDI ZL, 0x27
+	ST Z, DummyReg
+
+	LDI ZL, 0x13 ;ROW 1, upper block
+	LD DummyReg, Z
+	LDI ZL, 0x1D
+	ST Z, DummyReg
+
+	LDI ZL, 0x4A ;ROW 7, lower block
+	LD DummyReg, Z
+	LDI ZL, 0x13
+	ST Z, DummyReg
+
+	LDI ZL, 0x40 ;ROW 6, lower block
+	LD DummyReg, Z
+	LDI ZL, 0x4A
+	ST Z, DummyReg
+
+	LDI ZL, 0x36 ;ROW 5, lower block
+	LD DummyReg, Z
+	LDI ZL, 0x40
+	ST Z, DummyReg
+
+	LDI ZL, 0x2C ;ROW 4, lower block
+	LD DummyReg, Z
+	LDI ZL, 0x36
+	ST Z, DummyReg
+
+	LDI ZL, 0x22 ;ROW 3, lower block
+	LD DummyReg, Z
+	LDI ZL, 0x2C
+	ST Z, DummyReg
+
+	LDI ZL, 0x18 ;ROW 2, lower block
+	LD DummyReg, Z
+	LDI ZL, 0x22
+	ST Z, DummyReg
+
+	LDI ZL, 0x0E ;ROW 1, lower block
+	LD DummyReg, Z
+	LDI ZL, 0x18
+	ST Z, DummyReg
+
+	LDI ZL, 0x0E ;ROW 1, lower block
+	ST Z, PAT_COL1
+
+	;Restoring Z
+	LDI ZL, 0x00
+
+RET
+
+
+
+
+
+load_game_play_start:
+	LDI ZL, 0x00
+	LDI ZH, 0x01
+	;oth ROW (Not displayed - dummy)
+	LDI R16, MonsterNotGunPat
+	STS 0x212, R16
+	LDI R16, 0b00011111
+	STS 0x213, R16
+	LDI R16, ShipEnd
+	STS 0x214, R16
+	CALL InitScreenState
+
+	;1st ROW
+	LDI R16, 0b00011111
+	STS 0x212, R16
+	LDI R16, MonsterGunPat
+	STS 0x213, R16
+	LDI R16, 0b00000000
+	STS 0x214, R16
+	CALL InitScreenState 
+
+	;2nd ROW
+	LDI R16, 0b00011111
+	STS 0x212, R16
+	LDI R16, 0b00011111
+	STS 0x213, R16
+	LDI R16, 0b00000000
+	STS 0x214, R16
+	CALL InitScreenState
+
+	;3rd ROW
+	LDI R16, MonsterNotGunPat
+	STS 0x212, R16
+	LDI R16, 0b00011111
+	STS 0x213, R16
+	LDI R16, ShipEnd
+	STS 0x214, R16
+	CALL InitScreenState
+
+	;4th ROW
+	LDI R16, MonsterGunPat
+	STS 0x212, R16
+	LDI R16, MonsterNotGunPat
+	STS 0x213, R16
+	LDI R16, ShipMiddle
+	STS 0x214, R16
+	CALL InitScreenState
+
+	;5th ROW
+	LDI R16, 0b00011111
+	STS 0x212, R16
+	LDI R16, MonsterGunPat
+	STS 0x213, R16
+	LDI R16, ShipGun
+	STS 0x214, R16
+	CALL InitScreenState
+
+	;6th ROW
+	SECOND_ROW: 
+	LDI R16, 0b00011111
+	STS 0x212, R16
+	LDI R16, 0b00011111
+	STS 0x213, R16
+	LDI R16, ShipMiddle
+	STS 0x214, R16
+	CALL InitScreenState
+
+	; 7th ROW
+	LDI R16, MonsterNotGunPat
+	STS 0x212, R16
+	LDI R16, 0b00011111
+	STS 0x213, R16
+	LDI R16, ShipEnd
+	STS 0x214, R16
+	CALL InitScreenState
+ 
+	LDI ZL, 0x00 ; Reset
+	LDI ZH, 0x01
+
+RET
+
+InitScreenState: 
+	LDS R18,  0x212
+	ST Z+, R18
+
+	LDI R18, 0x00
+	LDI R17, 4
+
+	LOOP_BUFF: 
+		ST Z+, R18
+		DEC R17
+	BRNE LOOP_BUFF
+	LDS R18, 0x213
+	ST Z+, R18
+	LDI R18, 0x00
+	LDI R17, 3
+	LOOP_BUFF1_: 
+		ST Z+, R18
+		DEC R17
+	BRNE LOOP_BUFF1_
+	LDS R18, 0x214
+	ST Z+, R18
+RET ; Return to caller
+
+;keyboard part
+CONTEXT_SWITCH: LDI R16, 0xF0  ; Copy 0b1111 0000 to R16
+			    LDI R17, 0x0F  ; Copy 0b0000 1111 to R17
+
+
+
+			    OUT PORTD, R16 ; Set PORTD to R16
+	            OUT DDRD, R17  ; Set DDRD to R17  	
+			    RET ; Return to caller
+;keyboard part
+RESET_CONTEXT: LDI R16, 0x0F ; keyboard set
+			   LDI R17, 0xF0
+
+			   OUT PORTD, R16
+		       OUT DDRD, R17
+			   RET ; Return to caller
+
+
+;Funtion to shift column data on for a pattern
+execute_col_loop:
+	CPI STATE_MACHINE, 0x03 ;Joystick went off - on - off 
+	BREQ screenbuff_display ; game display
+	CPI STATE_MACHINE, 0x04 ;Joystick went off - on - off 
+	BREQ screenbuff_display ; game display
+	;CPI STATE_MACHINE, 0x05 ;Joystick went off - on - off 
+	;BREQ screenbuff_display ; game display
+	;CPI STATE_MACHINE, 0x06 ;Joystick went off - on - off 
+	;BREQ screenbuff_display ; game display
+	
+	;else display charbuffer:
+	charcuffer_display:
+		;increment Z till RowIndex for a character is reached
+		MOV Local_index1, RowIndex
+		Loop_Z:
+			LPM PAT_COL1, Z+
+			DEC Local_index1
+		BRNE Loop_Z
+
+	 	LDI Local_index2, 16  ;index to shift screen 16 times for every screen block
+		Col_loop2:		
+			;shift 5bit Column pattern into Shift Reg
+			LDI Local_index1, 5	
+			Col_loop3: 
+				CBI PORTB,3 ;pixel_off
+				SBRC PAT_COL1, 0 ;pixel turned off if pattern's LSB is 0
+				SBI PORTB,3	;pixel on
+				CBI PORTB, 5 ;falling edge of shift-reg clock
+				SBI PORTB, 5 ;rising edge of clk
+				LSR PAT_COL1 ; right shifting pattern for next bit
+				DEC Local_index1
+			BRNE Col_loop3
+
+			;Increment Z pointer by 8 to point to same row in next character
+			LDI Local_index1,8
+			Loop_Z2:
+				LPM PAT_COL1,Z+
+				DEC Local_index1
+			BRNE Loop_Z2
+			DEC Local_index2
+		BRNE col_loop2
+
+		;Restoring Z pointer address before next row access
+
+		LDI Local_index2, 16  ;index to shift screen 16 times for every screen block
+		rev_loop1:
+			;Decrement Z pointer by 8 to point to same row in next character
+			LDI Local_index1,8
+			rev_loop2:
+				LD PAT_COL1, -Z
+				DEC Local_index1
+			BRNE rev_loop2
+			DEC Local_index2
+		BRNE rev_loop1
+	
+		;increment Z till RowIndex for a character is reached
+		MOV Local_index1, RowIndex
+		rev_loop3:
+			LD PAT_COL1, -Z
+			DEC Local_index1
+		BRNE rev_loop3
+	RET
+
+	screenbuff_display:
+
+		LDI Local_index2, 10  ;index to shift screen 80 times for every screen block
+		Col_loop4:
+			;shift 5bit Column pattern into Shift Reg
+			LD PAT_COL1, Z
+			LDI Local_index1, 8	
+			Col_loop5: 
+				CBI PORTB,3 ;pixel_off
+				SBRC PAT_COL1, 0 ;pixel turned off if pattern's LSB is 0
+				SBI PORTB,3	;pixel on
+				CBI PORTB, 5 ;falling edge of shift-reg clock
+				SBI PORTB, 5 ;rising edge of clk
+				LSR PAT_COL1 ; right shifting pattern for next bit
+				DEC Local_index1
+			BRNE Col_loop5
+			LD PAT_COL1, Z+	
+			DEC Local_index2
+		BRNE Col_loop4
+	RET
+
+;function to shift row data for a pattern
+execute_row_loop:
+	LDI Local_index1, 0x08 
+	CLC
+	LoopRow:
+		CBI PORTB, 3 
+		CP Local_index1,RowIndex
+		BRNE Row_not_on
+		SBI PORTB, 3 
+		Row_not_on: 
+			CBI PORTB, 5 
+			SBI PORTB, 5
+		DEC Local_index1 
+	BRNE LoopRow
+RET
+
+;function to latch shift register data to output
+latch_shift_reg:
+	CBI PORTB, 4
+	SBI PORTB, 4 
+	LDI Local_index1, 255 ;index for delay loop
+	delay_loop:
+		NOP
+		DEC Local_index1
+	BRNE delay_loop
+	CBI PORTB, 4
+RET
+
+SHIFT_Z: LDI ZL, 0x0A
+		   LDI ZH, 0x01
+		    INC_LOOP: INC ZL
+					DEC R20
+					BRNE INC_LOOP
+			
+		    RET
+
+BULLET_DELAY: LDI Local_index1, 200
+	BLOOP:  NOP
+	LDI R28, 0xFF
+		BNESTED: NOP
+				DEC R28
+				BRNE BNESTED
+	DEC Local_index1
+	BRNE BLOOP
+	RET
+
 DISPLAY_INTERMEDIATE_STATE: LDI R17, 88
 				   CBI PORTB, 3
 				   SEND_DATA: CBI PORTB, 5
@@ -439,411 +847,106 @@ DISPLAY_INTERMEDIATE_STATE: LDI R17, 88
 					
 				  
 					RET
-				   
-
-InitScreenState: LDS R22,  0x212
-				 ST Z+, R22
-
-				LDI R22, 0x00
-				LDI R17, 4
-
-				LOOP_BUFF: ST Z+, R22
-						   DEC R17
-						   BRNE LOOP_BUFF
-
-				LDS R22, 0x213
-				ST Z+, R22
-
-				LDI R22, 0x00
-				LDI R17, 3
-
-				LOOP_BUFF1_: ST Z+, R22
-						   DEC R17
-						   BRNE LOOP_BUFF1_
-		   
-				LDS R22, 0x214
-				ST Z+, R22
-
-				RET ; Return to caller
-
-CONTEXT_SWITCH: LDI R16, 0b01110000  ; Copy 0b1111 0000 to R16
-			    LDI R17, 0b10001111  ; Copy 0b0000 1111 to R17
-
-
-
-			    OUT PORTD, R16 ; Set PORTD to R16
-	            OUT DDRD, R17  ; Set DDRD to R17  	
-			    RET ; Return to caller
-
-RESET_CONTEXT: LDI R16, 0b10001111 ; keyboard set
-			   LDI R17, 0b01110000
-
-			   OUT PORTD, R16
-		       OUT DDRD, R17
-			   RET ; Return to caller
-
-
-
-DISPLAY: SBI PORTC, 2 ; test
-      LDI R20, 10 ; 10 bytes per row 
-	  LOAD_BYTE: LDI R18, 8 ;Iteration variable, 8 bits to serially shift
-			     LD R16, Z+ ; Read from loacation pointed by z and auto-increment z
-			     CLC ; Clear carry bit
-
-	   SEND_BYTE_COL: SBI PORTB,3 ; Clear column data input
-				  ROR R16
-				  BRCS CARRY_ISONE
-				  CBI PORTB,3
-				  CARRY_ISONE: CBI PORTB,5 ; clock edge
-							   SBI PORTB,5
-				  DEC R18
-				  BRNE SEND_BYTE_COL
-
-	   DEC R20
-	   BRNE LOAD_BYTE ; load next byte
-	  
-		   
-	   LDI R18, 8
-	   MOV R25, R21
-       CLC
-	   SEND_BYTE_ROW: CBI PORTB,3 ; clear data input
-					   ROL R25
-					   BRCC _CARRY_ISZERO
-					   SBI PORTB,3 ; set data input
-					   _CARRY_ISZERO: CBI PORTB,5 ; clock edge
-									 SBI PORTB,5
-					   DEC R18
-					   BRNE SEND_BYTE_ROW
-	
-
-	CBI PORTB,4 ; latch data to output
-	LDI R16, 0xFE
-	AWAIT: NOP
-		   DEC R16
-		   BRNE AWAIT
-	SBI PORTB,4
-	LDI R16, 0xFE
-	AWAIT2: NOP
-		   DEC R16
-		   BRNE AWAIT2
-	CBI PORTB, 4
-	
-	;CLC
-	LSL R21 ; shift to next row
-	CPI R21, 0x80
-	BRNE DISPLAY
-	
-	LDI R21, 0x01 ; reset to first row again
-	  LDI ZL, 0x00
-	  LDI ZH, 0x01
-	  LDI XL, 0x20
-	  LDI XH, 0x02
-
-	RET
-
-SHOOT_BOSS: LDI R16, 0x01
-			ST Y, R16
-		   RET
-			
-
-SHIP_SHOOT: 
-	    ; -------------- START SHOOTING -------------------
-
-		; -------------- -----------FIRST BLOC ------------------------------------------
-		    LDI YL, 0xB0
-			LDI YH, 0x08
-
-			LDI ZL, 0x00
-			LDI ZH, 0x01
-
-			LDI R26, 2 ; 5 gun locations
-			LDI R18, 49 ; Start at 30, to check the location of the gun
-
-			shootloop: LDI R16, 0x80
-		 				; -------- FIND WHERE THE GUN IS ---
-						RCALL SHIFT_Z
-						LD R17, Z
-						CPI R17, ShipGun
-			 
-						BREQ FIRE
-						;------ MOVE TO NEXT PATH ------
-						LDI R27, 10
-						ADD R18, R27
-						LDI ZL, 0x00
-						LD R30, Y+
-						DEC R26
-						BRNE shootloop
-
-			; -------------- -----------SECOND BLOC ------------------------------------------
-			
-			LDI R26, 2 ; 5 gun locations
-			LDI R18, 14 ; Start at 5, to check the location of the gun
-
-			shootloop2: LDI R16, 0x80
-		 				; ------ FIND WHERE THE GUN IS ----
-						RCALL SHIFT_Z
-						LD R17, Z
-						CPI R17, ShipGun 
-						BREQ FIRE
-						;------ MOVE TO NEXT PATH ----------
-						LDI R27, 10
-						ADD R18, R27
-						LDI ZL, 0x00
-						LD R30, Y+
-						DEC R26
-						BRNE shootloop2
-						RJMP END_SHOOTING
-			; --------------------------- FIRE -------------------------
-			FIRE: LDI R16, 0x80
-				  ST Y, R16
-
-		  END_SHOOTING : RET
-		  test: SBI DDRC, 3
-				CBI PORTC,3
-
-
-
-UPDATE_STATE: LDI YL, 0xB0
-			 LDI YH, 0x08 
-			 LDI ZL, 0x00
-			 LDI ZH, 0x01
-		
-		; ---------------------------------------FIRST BLOC ----------------------------
-       LDI R19, 2 ; 5 BULLET PATHS
-       LDI R18, 48 ; FIRST PATH ADDRESS
-
-       TRACE_BULLET: RCALL SHIFT_Z
-               RCALL BULLET_PATH
-               LDI R25, 10
-               ADD R18, R25
-
-               LDI ZL, 0x00
-               DEC  R19
-               BRNE TRACE_BULLET
-
-
-       LDI ZL, 0x00
-       LDI ZH, 0x01
-
-
-      ; ----------------- --------------SECOND BLOC -------------------------------------------
-   
-      LDI ZL, 0x00
-      LDI R19, 2 ; 10 BULLET PATHS
-      LDI R18, 13 ; FIRST PATH ADDRESS
-
-       TRACE_BULLET2: RCALL SHIFT_Z
-               RCALL BULLET_PATH
-               LDI R25, 10
-               ADD R18, R25
-
-               LDI ZL, 0x00
-               DEC  R19
-               BRNE TRACE_BULLET2
-
-	  ; -------------------- BOSS BULLETS -----------------------
-       ;-------------- FIRST BLOC ----------------------
-       LDI ZL, 0x00
-       LDI R19, 2 ; 2 BULLET PATHS
-       LDI R18, 26 ; FIRST PATH ADDRESS
-
-       BTRACE_BULLET: RCALL SHIFT_Z
-               RCALL BOSSBULLET_PATH
-               LDI R25, 10
-               ADD R18, R25
-
-               LDI ZL, 0x00
-               DEC  R19
-               BRNE BTRACE_BULLET
-
-	 LDI ZL, 0x00
-       LDI R19, 1 ; 2 BULLET PATHS
-       LDI R18, 66 ; FIRST PATH ADDRESS
-
-       BTRACE_BULLET2: RCALL SHIFT_Z
-               RCALL BOSSBULLET_PATH
-               LDI R25, 10
-               ADD R18, R25
-
-               LDI ZL, 0x00
-               DEC  R19
-               BRNE BTRACE_BULLET2
-
-
-	; -------------------- BOSS BULLETS -----------------------
-       ;-------------- SECOND BLOC ----------------------
-       LDI ZL, 0x00
-       LDI R19, 1 ; 2 BULLET PATHS
-       LDI R18, 1 ; FIRST PATH ADDRESS
-
-       BTRACE_BULLET3: RCALL SHIFT_Z
-               RCALL BOSSBULLET_PATH
-               LDI R25, 10
-               ADD R18, R25
-
-               LDI ZL, 0x00
-               DEC  R19
-               BRNE BTRACE_BULLET3
-
-
-			   LDI ZL, 0x00
-
-       LDI R19, 2 ; 2 BULLET PATHS
-       LDI R18, 31 ; FIRST PATH ADDRESS
-
-       BTRACE_BULLET4: RCALL SHIFT_Z
-               RCALL BOSSBULLET_PATH
-               LDI R25, 10
-               ADD R18, R25
-
-               LDI ZL, 0x00
-               DEC  R19
-               BRNE BTRACE_BULLET4
-
-
-      LDI YL, 0xB0
-       LDI YH, 0x08
-
-       LDI R16, 0x00
-       LDI R17, 20
-       RESET: ST Y+, R16
-          DEC R17
-          BRNE RESET
-
-			 RCALL BULLET_DELAY
-			 RET
-
-SHIFT_Z:  NOP
-		  STS 0x260, R18
-		  LDS R25, 0x260
-			SHIFT:  INC ZL
-					DEC R25
-					BRNE SHIFT
-			RET
-
-
-BOSSBULLET_PATH: LD R16, Z
-			  LD R17, Y+
-			  OR R16, R17
-
-			  LSL R16
-			  ST Z+, R16
-			BRCC BNextByte
-
-			LDI R16, 0x01
-			ST Z, R16
-
-			BNextByte: LD R16, Z
-					LSL R16
-					ST Z+, R16
-			BRCC BNextByte2
-
-			LDI R16, 0x01
-			ST Z, R16
-			
-		BNextByte2: LD R16, Z
-					LSL R16
-					ST Z, R16
-
-
-			  RET
-
-BULLET_PATH:  LD R16, Z
-			  LD R17, Y+
-			  OR R16, R17
-
-			  LSR R16
-			  ST Z, R16	  
-			  DEC ZL
-			  BRCC NextByte
-
-			LDI R16, 0x80
-			ST Z, R16
-
-			NextByte:  LD R16, Z
-					LSR R16
-					ST Z, R16
-					DEC ZL
-			BRCC NextByte2
-
-			LDI R16, 0x80
-			ST Z, R16
-			
-		NextByte2: LD R16, Z
-					LSR R16
-					ST Z, R16
-			  
-			  RET
-
-BULLET_DELAY: LDI R20, 0xAF
-	BLOOP:  NOP
-		LDI R28, 0xFF
-		BNESTED: NOP
-				DEC R28
-				BRNE BNESTED
-	DEC R20
-	BRNE BLOOP
-	RET
 
 TimerInterrupt: LDI R16, 0xFF
-				LDI R17, 0XCF
+				LDI R17, 0XAF
 				STS TCNT1L,R16
 				STS TCNT1H,R17
 				
-				LDI YH, 0x08
+				LDI XH, 0x02
 
-				CPI R24, 6
-				BREQ lastPat 
-
-				CPI R24, 5
-				BREQ fifthPat 
-
-				CPI R24, 4
-				BREQ fourthPat 
-
-				CPI R24, 3
-				BREQ thirdPat 
-
-				CPI R24, 2
-				BREQ secondPat 
-
-		
-				CPI R24, 0x00
-				BREQ firstPat 
 				
-				 DEC R24
-				 RETI
+				CPI BOSS_SHIPCOUNTER, 6
+				BREQ PAT1
+				CPI BOSS_SHIPCOUNTER, 5
+				BREQ PAT2
+				CPI BOSS_SHIPCOUNTER, 4
+				BREQ PAT3
+				CPI BOSS_SHIPCOUNTER, 3
+				BREQ PAT4
+				CPI BOSS_SHIPCOUNTER, 2
+				BREQ PAT5
+				CPI BOSS_SHIPCOUNTER, 1
+				BREQ PAT6
 
+				LDI BOSS_SHIPCOUNTER, 6 ; reset
+				RETI
 
-				firstPat: LDI YL, 0xB4
-						  LDI R24, 6
-						  RCALL SHOOT_BOSS
-						RETI
+				PAT1: LDI XL, 0x92
+					  RJMP boss_fire
+				PAT2: LDI XL, 0x95
+					  RJMP boss_fire
+				PAT3: LDI XL, 0x9E
+					  RJMP boss_fire
+				PAT4: LDI XL, 0xA1
+					  RJMP boss_fire
+				PAT5: LDI XL, 0xAA
+					  RJMP boss_fire
+				PAT6: LDI XL, 0xAD
 
-				secondPat: LDI YL, 0xB5
-						  DEC R24
-						  RCALL SHOOT_BOSS
-						RETI
-				thirdPat: LDI YL, 0xB6
-						  DEC R24
-						  RCALL SHOOT_BOSS
-						RETI
+				boss_fire: LD R16, X
+				LDI R17, 0x01
+				OR R16, R17
+				ST X, R16
+				DEC BOSS_SHIPCOUNTER
+				RETI
 
-				fourthPat: LDI YL, 0xB7
-						  DEC R24
-						  RCALL SHOOT_BOSS
-						RETI
+;character memory table
+;Stores >START!
+;		  ----
+CharTable1:
+.DB 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000 ;Nothing
+.DB 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000 ;Nothing
+.DB 0b00000, 0b00000, 0b00000, 0b11111, 0b00000, 0b00000, 0b00000, 0b00000 ;line
+.DB 0b00000, 0b00000, 0b00000, 0b11111, 0b00000, 0b00000, 0b00000, 0b00000 ;line
+.DB 0b00000, 0b00000, 0b00000, 0b11111, 0b00000, 0b00000, 0b00000, 0b00000 ;line
+.DB 0b00000, 0b00000, 0b00000, 0b11111, 0b00000, 0b00000, 0b00000, 0b00000 ;line
+.DB 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000 ;Nothing
+.DB 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000 ;Nothing
+.DB 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000 ;Nothing
+.DB 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b00000, 0b00100, 0b00000 ;exclamation
+.DB 0b01110, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b00000 ;T
+.DB 0b01110, 0b01001, 0b01001, 0b01110, 0b01100, 0b01010, 0b01001, 0b00000 ;R
+.DB 0b00110, 0b01001, 0b01001, 0b01111, 0b01001, 0b01001, 0b01001, 0b00000 ;A
+.DB 0b01110, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b00000 ;T
+.DB 0b00111, 0b01000, 0b01000, 0b00110, 0b00001, 0b00001, 0b01110, 0b00000 ;S
+.DB 0b00000, 0b00100, 0b00010, 0b00001, 0b00010, 0b00100, 0b00000, 0b00000 ;small arrow
+.DB 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000 ;Nothing
 
-				fifthPat: LDI YL, 0xB8
-						  DEC R24
-						  RCALL SHOOT_BOSS
-						RETI
+CharTable2:
+.DB 0b01110, 0b01001, 0b01001, 0b01110, 0b01100, 0b01010, 0b01001, 0b00000 ;R
+.DB 0b01111, 0b01000, 0b01000, 0b01111, 0b01000, 0b01000, 0b01111, 0b00000 ;E
+.DB 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b01010, 0b00100, 0b00000 ;V
+.DB 0b00110, 0b01001, 0b01001, 0b01001, 0b01001, 0b01001, 0b00110, 0b00000 ;0
+.DB 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000 ;Nothing
+.DB 0b00000, 0b00100, 0b00010, 0b00001, 0b00010, 0b00100, 0b00000, 0b00000 ;small arrow
+.DB 0b00000, 0b00100, 0b00010, 0b00001, 0b00010, 0b00100, 0b00000, 0b00000 ;small arrow
+.DB 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000 ;Nothing
+.DB 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000 ;Nothing
+.DB 0b00000, 0b00100, 0b00010, 0b00001, 0b00010, 0b00100, 0b00000, 0b00000 ;small arrow
+.DB 0b00000, 0b00100, 0b00010, 0b00001, 0b00010, 0b00100, 0b00000, 0b00000 ;small arrow
+.DB 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000 ;Nothing
+.DB 0b01111, 0b01000, 0b01000, 0b01111, 0b01000, 0b01000, 0b01111, 0b00000 ;E
+.DB 0b10001, 0b11011, 0b10101, 0b10001, 0b10001, 0b10001, 0b10001, 0b00000 ;M
+.DB 0b00110, 0b01001, 0b01001, 0b01111, 0b01001, 0b01001, 0b01001, 0b00000 ;A
+.DB 0b00110, 0b01001, 0b01000, 0b01011, 0b01001, 0b01001, 0b00110, 0b00000 ;G
 
-				lastPat: LDI YL, 0xB9
-						  DEC R24
-						  RCALL SHOOT_BOSS
-						RETI
-
-
-
-
+CharTable3:
+.DB 0b00000, 0b00100, 0b00010, 0b00001, 0b00010, 0b00100, 0b00000, 0b00000 ;small arrow
+.DB 0b00000, 0b00100, 0b00010, 0b00001, 0b00010, 0b00100, 0b00000, 0b00000 ;small arrow
+.DB 0b01111, 0b01000, 0b01000, 0b01111, 0b01000, 0b01000, 0b01111, 0b00000 ;E
+.DB 0b10001, 0b11011, 0b10101, 0b10001, 0b10001, 0b10001, 0b10001, 0b00000 ;M
+.DB 0b00110, 0b01001, 0b01001, 0b01111, 0b01001, 0b01001, 0b01001, 0b00000 ;A
+.DB 0b00110, 0b01001, 0b01000, 0b01011, 0b01001, 0b01001, 0b00110, 0b00000 ;G
+.DB 0b00000, 0b00100, 0b00010, 0b00001, 0b00010, 0b00100, 0b00000, 0b00000 ;small arrow
+.DB 0b00000, 0b00100, 0b00010, 0b00001, 0b00010, 0b00100, 0b00000, 0b00000 ;small arrow
+.DB 0b00000, 0b00100, 0b00010, 0b00001, 0b00010, 0b00100, 0b00000, 0b00000 ;small arrow
+.DB 0b00000, 0b00100, 0b00010, 0b00001, 0b00010, 0b00100, 0b00000, 0b00000 ;small arrow
+.DB 0b01111, 0b01000, 0b01000, 0b01111, 0b01000, 0b01000, 0b01111, 0b00000 ;E
+.DB 0b10001, 0b11011, 0b10101, 0b10001, 0b10001, 0b10001, 0b10001, 0b00000 ;M
+.DB 0b00110, 0b01001, 0b01001, 0b01111, 0b01001, 0b01001, 0b01001, 0b00000 ;A
+.DB 0b00110, 0b01001, 0b01000, 0b01011, 0b01001, 0b01001, 0b00110, 0b00000 ;G
+.DB 0b00000, 0b00100, 0b00010, 0b00001, 0b00010, 0b00100, 0b00000, 0b00000 ;small arrow
+.DB 0b00000, 0b00100, 0b00010, 0b00001, 0b00010, 0b00100, 0b00000, 0b00000 ;small arrow
+.DB 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000 ;Nothing
+.DB 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000 ;Nothing
