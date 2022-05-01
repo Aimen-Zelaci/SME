@@ -47,8 +47,9 @@ rjmp JoystickInterrupt
 rjmp TimerInterrupt
 
 
-.ORG 0x0020
-rjmp Timer0interrupt
+;.ORG 0x0020
+;rjmp Timer0interrupt
+
 Init: 
 ; Configure output pin PB3
 SBI DDRB, 3 ; Pin PB3 is an output: Data pin SDI (Serial Data In)
@@ -82,8 +83,12 @@ SEI ;Set golabl interrupt
 
 LDI R16, 0x04
 STS TCCR1B, R16 ;prescaler timer 1
-LDI R16, 0x05
-OUT TCCR0B, R16 ;prescaler timer 0
+;LDI R16, 0x05
+;OUT TCCR0B, R16 ;prescaler timer 0
+;LDI R16, 0x02
+;OUT TCCR0A, R16 ;CTC MODE
+;LDI R16, 100
+;OUT OCR0A, R16
  
 ; Joystick interrupt
 LDI R16, 0x01
@@ -140,15 +145,19 @@ Load_screen_state:
 
 		LDI R16, 0x00
 		STS TIMSK1, R16 ;timer1 interrupt disable
-		STS TIMSK0, R16 ; timer0 interrupt disable
+		;STS TIMSK0, R16 ; timer0 interrupt disable
 		RET
 	State_1: ;GAME PLAY
 		LDI R16, 0x01
 		STS TIMSK1, R16 ;timer1 interrupt enable
-		STS TIMSK0, R16 ; timer0 interrupt enable
+		;STS TIMSK0, R16 ; timer0 interrupt enable
 
 		CALL CHECK_STATE
-		;CALL BULLET_DELAY
+		CALL UPDATE_BULLETSTATE
+		CALL BULLET_DELAY
+
+		;SBIC TIFR0, TOV0
+		;rjmp update
 
 		LDI ZH,0x01
 		LDI ZL,0x00
@@ -156,7 +165,7 @@ Load_screen_state:
 	State_2: ; GAME OVER
 		LDI R16, 0x00
 		STS TIMSK1, R16 ;timer1 interrupt disable
-		STS TIMSK0, R16 ; timer0 interrupt disable
+		;STS TIMSK0, R16 ; timer0 interrupt disable
 		LDI ZH, high(CharTable2<<1)
 		LDI ZL, low(CharTable2<<1)
 		RET	
@@ -829,7 +838,7 @@ SHIFT_Z: LDI ZL, 0x0A
 			
 		    RET
 
-BULLET_DELAY: LDI Local_index1, 1
+BULLET_DELAY: LDI Local_index1, 100
 	BLOOP:  NOP
 	LDI R28, 0xFF
 		BNESTED: NOP
@@ -853,7 +862,7 @@ DISPLAY_INTERMEDIATE_STATE: LDI R17, 88
 					RET
 
 TimerInterrupt: LDI R16, 0xFF
-				LDI R17, 0XAF
+				LDI R17, 0XDF
 				STS TCNT1L,R16
 				STS TCNT1H,R17
 				
@@ -893,14 +902,20 @@ TimerInterrupt: LDI R16, 0xFF
 				OR R16, R17
 				ST X, R16
 				DEC BOSS_SHIPCOUNTER
+
+				;CALL UPDATE_BULLETSTATE
+
 				RETI
 
-Timer0interrupt: LDI R17, 1
-				 OUT TCNT0,R17
-				 ;CALL DISPLAY_INTERMEDIATE_STATE
-				 CALL UPDATE_BULLETSTATE
-				 ;CBI PORTC, 2
-				 RETI
+;Timer0interrupt: LDI R17, 0
+;				 OUT TCNT0,R17
+;				 ;CALL DISPLAY_INTERMEDIATE_STATE
+;				 CALL UPDATE_BULLETSTATE
+;				 ;CALL CHECK_STATE
+;				 LDI ZH,0x01
+;				 LDI ZL,0x00
+;				 CBI PORTC, 2
+;				 RETI
 
 JoystickInterrupt: ;CBI PORTC, 2
 				   SBRS LAST_JOY, 0 ;skip state change if previous JS state was same as on
