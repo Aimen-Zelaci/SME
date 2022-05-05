@@ -47,8 +47,8 @@ rjmp JoystickInterrupt
 rjmp TimerInterrupt
 
 
-;.ORG 0x0020
-;rjmp Timer0interrupt
+.ORG 0x0020
+rjmp Timer0interrupt
 
 Init: 
 ; Configure output pin PB3
@@ -81,10 +81,10 @@ CALL Load_game_play_start
 SEI ;Set golabl interrupt
 ; timerinterrupt	/* Timer interrupt enabled inside machine state*/
 
-LDI R16, 0x04
+LDI R16, 0x05
 STS TCCR1B, R16 ;prescaler timer 1
-;LDI R16, 0x05
-;OUT TCCR0B, R16 ;prescaler timer 0
+LDI R16, 0x05
+OUT TCCR0B, R16 ;prescaler timer 0
 ;LDI R16, 0x02
 ;OUT TCCR0A, R16 ;CTC MODE
 ;LDI R16, 100
@@ -99,12 +99,28 @@ STS PCMSK0, R17
 ; INIT BOSS ACTIVE GUN COUNTER = it has 6 guns
 LDI BOSS_SHIPCOUNTER, 6
 
+LDI XH, 0x02
+LDI YH, 0x02
+LDI YL, 0x50
+LDI XL, 0x90
+
+LDI local_index1, 20
+LDI R16, 0x00
+INIT_BULLETS: ST Y, R16
+			  ST X, R16
+			  DEC local_index1
+			  BRNE INIT_BULLETS
+
 ;Main Function
 Main: CALL display
 	;CALL state_machine_update
 	CALL load_screen_state
 	LDI LAST_JOY, 0x00
 	SBI PORTC,2
+	LDS R18, 0x0380
+	CPI R18, 1
+	BRNE Main
+	CALL BOSS_SHOOT
 RJMP Main
 
 init_screen:
@@ -143,18 +159,21 @@ Load_screen_state:
 		LDI ZH, high(CharTable1<<1) 
 		LDI ZL, low(CharTable1<<1)
 
+		LDI R18, 5
+		STS 0x0381, R18
+
 		LDI R16, 0x00
 		STS TIMSK1, R16 ;timer1 interrupt disable
-		;STS TIMSK0, R16 ; timer0 interrupt disable
+		STS TIMSK0, R16 ; timer0 interrupt disable
 		RET
 	State_1: ;GAME PLAY
 		LDI R16, 0x01
 		STS TIMSK1, R16 ;timer1 interrupt enable
-		;STS TIMSK0, R16 ; timer0 interrupt enable
+		STS TIMSK0, R16 ; timer0 interrupt enable
 
 		CALL CHECK_STATE
-		CALL UPDATE_BULLETSTATE
-		CALL BULLET_DELAY
+		;CALL UPDATE_BULLETSTATE
+		;CALL BULLET_DELAY
 
 		;SBIC TIFR0, TOV0
 		;rjmp update
@@ -165,7 +184,7 @@ Load_screen_state:
 	State_2: ; GAME OVER
 		LDI R16, 0x00
 		STS TIMSK1, R16 ;timer1 interrupt disable
-		;STS TIMSK0, R16 ; timer0 interrupt disable
+		STS TIMSK0, R16 ; timer0 interrupt disable
 		LDI ZH, high(CharTable2<<1)
 		LDI ZL, low(CharTable2<<1)
 		RET	
@@ -233,7 +252,13 @@ CHECK_STATE:
 				CALL SHOOT
 			 RET
 
-UPDATE_BULLETSTATE: LDI ZL, 0x0A
+UPDATE_BULLETSTATE: PUSH ZL
+				    PUSH ZH
+					PUSH R18
+					PUSH R20
+					PUSH R2
+					IN R2, SREG
+					LDI ZL, 0x0A
 					LDI YH, 0x02
 					LDI XH, 0x02
 
@@ -303,10 +328,18 @@ UPDATE_BULLETSTATE: LDI ZL, 0x0A
 					CALL TRACE_BULLET
 							 
 			
-			finish_update: RET
+			finish_update:  OUT SREG, R2
+							POP R2
+							POP R20
+							POP R18
+							POP ZH
+							POP ZL
+							RET
 
-TRACE_BULLET: LD R16, Y
-			LD R17, X
+TRACE_BULLET: LD R16, Y ; ship bullet
+			LD R17, X ; boss bullet
+			
+			; --------------
 			; ---- check if bullets are met ----
 			CPI R16, 0x00
 			BREQ continue
@@ -317,16 +350,26 @@ TRACE_BULLET: LD R16, Y
 			; --- continue ----
 			continue: MOV R18, R16
 			OR R18, R17
-			ST -Z, R18
+			ST -Z, R18;storing bullet 
 
 			LSL R17 ; shift boss bullet to the left
 			ST X+, R17
-			CLC
+			BRCC shipNotHit
+
+			
+			; ---- Check if ship is hit
+			INC ZL
+			LD R18, Z
+			CPI R18, shipGun
+			BREQ shipDamaged
+			DEC ZL
+			; --------------
+
+			shipNotHit:CLC
 			LSR R16 ; shift ship bullet to the right
 			ST Y+, R16
-
 			BRCC next ; if carry is set write to the next byte 
-			LDI R16, 0x80
+			LDI R16, 0x80 ;shifting 1 to next byte of bullet path
 			ST Y, R16
 
 			; next byte
@@ -338,11 +381,11 @@ TRACE_BULLET: LD R16, Y
 
 				  LSR R18
 				  ST Y+, R18
-				  BRCC next2
+				  BRCC bossBullet
 				  LDI R16, 0x80
 				  ST Y, R16
 					; move the boss bultt to the next byte if carry is set
-				  next2:  LSL R17
+				  bossBullet:  LSL R17
 						  ST X, R17
 						  BRCC next3
 						  LDI R17, 0x01
@@ -359,6 +402,8 @@ TRACE_BULLET: LD R16, Y
 
 					 LSR R18
 					 ST Y+, R18
+					 BRCS bossDamaged
+
 					 CLC
 					 LSL R17
 					 ST X, R17
@@ -374,10 +419,26 @@ TRACE_BULLET: LD R16, Y
 								  ST Y, R16
 								  ST X, R16
 								  RET
+				; --- if ship is hit by boss bullet -------
+				shipDamaged: LDS R18, 0x0381
+							 DEC R18
+							 BREQ game_over
+							 STS 0x0381, R18
+							 RET
+
+							 game_over: LDI STATE_MACHINE, 0x05 ; game over state
+										RET
+			   ; ----- Check if boss is hit by ship bullet ---------------
+			   bossDamaged: LDI STATE_MACHINE, 0x05 ; game over state
+							RET	
 										 
 										 		
 
-SHOOT: LDI ZL, 0x0A
+SHOOT: PUSH ZL
+	   PUSH ZH
+	   PUSH R2
+	   IN R2, SREG
+	   LDI ZL, 0x0A
 	   LDI YL, 0x50
 
 	   LDD R16, Z+49
@@ -420,7 +481,11 @@ SHOOT: LDI ZL, 0x0A
 	   LDD R16, Z+4
 	   RCALL SHIP_FIRE
 
-	   finish_shooting: RET
+	   finish_shooting: OUT SREG, R2
+						POP R2
+						POP ZH
+						POP ZL
+						RET
 
 SHIP_FIRE: CPI R16, ShipGun
 		   BRNE DONT_FIRE
@@ -432,6 +497,66 @@ SHIP_FIRE: CPI R16, ShipGun
 					   INC YL
 					  INC YL
 					  RET
+
+BOSS_SHOOT:		LDI XH, 0x02
+				PUSH ZL
+				PUSH ZH
+			    PUSH R18
+			    PUSH R2
+				IN R2, SREG
+				
+				CPI BOSS_SHIPCOUNTER, 6
+				BREQ PAT1
+				CPI BOSS_SHIPCOUNTER, 5
+				BREQ PAT2
+				CPI BOSS_SHIPCOUNTER, 4
+				BREQ PAT3
+				CPI BOSS_SHIPCOUNTER, 3
+				BREQ PAT4
+				CPI BOSS_SHIPCOUNTER, 2
+				BREQ PAT5
+				CPI BOSS_SHIPCOUNTER, 1
+				BREQ PAT6
+
+				LDI BOSS_SHIPCOUNTER, 6 ; reset
+				OUT SREG, R2
+				POP R2
+			    POP R18
+				POP ZH
+				POP ZL
+				RETI
+
+				PAT1: LDI XL, 0x92
+					  RJMP boss_fire
+				PAT2: LDI XL, 0x95
+					  RJMP boss_fire
+				PAT3: LDI XL, 0x9E
+					  RJMP boss_fire
+				PAT4: LDI XL, 0xA1
+					  RJMP boss_fire
+				PAT5: LDI XL, 0xAA
+					  RJMP boss_fire
+				PAT6: LDI XL, 0xAD
+
+				boss_fire: LD R16, X
+				LDI R17, 0x01
+				OR R16, R17
+				ST X, R16
+				DEC BOSS_SHIPCOUNTER
+
+				;CALL UPDATE_BULLETSTATE
+
+				LDI R18, 0
+				STS 0x0380, R18
+
+				OUT SREG, R2
+				POP R2
+			    POP R18
+				POP ZH
+				POP ZL
+
+				RET
+
 MOVE_DOWN:
 
 	LDI ZH, 0x01
@@ -860,62 +985,42 @@ DISPLAY_INTERMEDIATE_STATE: LDI R17, 88
 					
 				  
 					RET
+PUSH_PROTECT: PUSH ZL
+			  PUSH ZH
+			  PUSH R2
+			  PUSH R18
+			  PUSH R20
+			  IN R2, SREG
+
+POP_PROTECT: OUT SREG, R2
+			 POP R20
+			 POP R18
+			 POP R2
+			 POP ZH
+			 POP ZL
 
 TimerInterrupt: LDI R16, 0xFF
-				LDI R17, 0XDF
+				LDI R17, 0xDF
 				STS TCNT1L,R16
 				STS TCNT1H,R17
 				
-				LDI XH, 0x02
+				PUSH R18
 
-				
-				CPI BOSS_SHIPCOUNTER, 6
-				BREQ PAT1
-				CPI BOSS_SHIPCOUNTER, 5
-				BREQ PAT2
-				CPI BOSS_SHIPCOUNTER, 4
-				BREQ PAT3
-				CPI BOSS_SHIPCOUNTER, 3
-				BREQ PAT4
-				CPI BOSS_SHIPCOUNTER, 2
-				BREQ PAT5
-				CPI BOSS_SHIPCOUNTER, 1
-				BREQ PAT6
+				LDI R18, 1
+				STS 0x0380, R18
 
-				LDI BOSS_SHIPCOUNTER, 6 ; reset
+				POP R18
 				RETI
 
-				PAT1: LDI XL, 0x92
-					  RJMP boss_fire
-				PAT2: LDI XL, 0x95
-					  RJMP boss_fire
-				PAT3: LDI XL, 0x9E
-					  RJMP boss_fire
-				PAT4: LDI XL, 0xA1
-					  RJMP boss_fire
-				PAT5: LDI XL, 0xAA
-					  RJMP boss_fire
-				PAT6: LDI XL, 0xAD
-
-				boss_fire: LD R16, X
-				LDI R17, 0x01
-				OR R16, R17
-				ST X, R16
-				DEC BOSS_SHIPCOUNTER
-
-				;CALL UPDATE_BULLETSTATE
-
-				RETI
-
-;Timer0interrupt: LDI R17, 0
-;				 OUT TCNT0,R17
+Timer0interrupt: LDI R17, 1
+				 OUT TCNT0,R17
 ;				 ;CALL DISPLAY_INTERMEDIATE_STATE
-;				 CALL UPDATE_BULLETSTATE
+				 CALL UPDATE_BULLETSTATE
 ;				 ;CALL CHECK_STATE
 ;				 LDI ZH,0x01
 ;				 LDI ZL,0x00
-;				 CBI PORTC, 2
-;				 RETI
+				 CBI PORTC, 2
+				 RETI
 
 JoystickInterrupt: ;CBI PORTC, 2
 				   SBRS LAST_JOY, 0 ;skip state change if previous JS state was same as on
