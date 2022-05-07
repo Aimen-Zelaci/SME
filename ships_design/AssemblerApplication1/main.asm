@@ -17,11 +17,6 @@ RJMP Init ; First instruction that is executed by the microcontroller
 .DEF local_index2	= R18
 .DEF PAT_COL1		= R19 ;Temporary Pattern for column
 .DEF DummyReg		= R20
-.DEF STATE_MACHINE	= R21 ;Stores state of game  00 : start
-												;01 : game over
-.DEF LAST_JOY		= R22 ; Stores last state of joystick  
-.DEF RowIndex		= R23 ; Index used to count the row number
-.DEF LAST_KEY		= R24 ; global var to store state of keyboard last 
 .DEF BOSS_SHIPCOUNTER = R25 ; Current active gun index of the boss
 
 .EQU MonsterNotGunPat = 0b11111001
@@ -29,6 +24,14 @@ RJMP Init ; First instruction that is executed by the microcontroller
 .EQU ShipGun = 0b0011111
 .EQU ShipMiddle = 0b00111110
 .EQU ShipEnd = 0b0010000
+.EQU boss_shoot_status = 0x0380
+.EQU Ship_life = 0x0381		;	Global var to store life of ship
+.EQU boss_life = 0x0382		;	Global var to store life of boss ship
+.EQU SCREEN_STATE = 0x0383	;	Global var to store which screen to display from screen patterns (defined below)
+.EQU JOY_STK_STATE = 0x0384 ;	Global var to store state of joystick whether low or high
+.EQU LAST_KEY = 0x0385		;	Global var to store state of keyboard last pressed
+.EQU RowIndex = 0x0386		;	Global var to store Index used to count row number in display
+.EQU BUZZ_PATTERN = 0x0387	;	Global var to store key pattern for buzzer sound
 
 ;keyboard patterns
 .EQU BTN8_PATTERN = 0b01111011 ; Button 8 pressed pattern
@@ -38,17 +41,35 @@ RJMP Init ; First instruction that is executed by the microcontroller
 .EQU BTN2_PATTERN = 0b11011011 ; Button 2 pressed pattern
 .EQU NOBTN_PATTERN =  0b11111111 ; No button preesed pattern
 .EQU OTHER_PATTERN = 0b00110011 ; Pattern for the rest of the buttons
+.EQU SHIP_DAMAGE = 0b11	; Pattern checked by buzzer for ship damage
+.EQU BOSS_DAMAGE = 0b101 ; Pattern checked by buzzer for boss damage
+
+;Screen states
+.EQU start_screen = 0x01	;State for displaying start screen
+.EQU game_screen = 0x02		;State for displaying game screen
+.EQU over_screen = 0x03		;State for displaying game over screen
+.EQU win_screen = 0x04		;State for displaying victory!
+
+;Variables
+.EQU ShipLifeLine = 0x4E	;Location of ship lifeline on screenbuffer
+.EQU BossLifeLine = 0x4C	;Location of boss lifeline on screenbuffer
+.EQU Lives_ship_5 = 0b11000000 ;lives remaining
+.EQU Lives_boss_5 = 0b00011111 ;lives remaining
 
 ; Interrupts
 .ORG 0x0006
 rjmp JoystickInterrupt
 
-.org 0x001A
-rjmp TimerInterrupt
+.ORG 0x0012
+rjmp Timer2interrupt
 
+.org 0x001A
+rjmp Timer1Interrupt
 
 .ORG 0x0020
 rjmp Timer0interrupt
+
+
 
 Init: 
 ; Configure output pin PB3
@@ -70,21 +91,31 @@ OUT PORTD, R16 ; Init keyboard. set all rows to ground and cols to 1
 SBI DDRC, 2
 SBI PORTC,2
 
-;Initializing state machine
-LDI STATE_MACHINE, 0x01
-LDI LAST_JOY, 0x00
-LDI LAST_KEY, 0x00
+;configure output buzzer in PB1
+SBI DDRB,1;	output pin
+CBI PORTB,1 ; pull-down buzzer by default
 
-;CALL init_screen
+;Initializing state machine
+LDI DummyReg, 0x01
+STS SCREEN_STATE, DummyReg
+LDI DummyReg, 0x00
+STS JOY_STK_STATE, DummyReg
+STS LAST_KEY, DummyReg
+
+;Establishing start screen
 CALL Load_game_play_start
 
 SEI ;Set golabl interrupt
-; timerinterrupt	/* Timer interrupt enabled inside machine state*/
+; timer1Interrupt	/* Timer interrupt enabled inside machine state*/
 
+LDI R16, 0x05
+STS TCCR2B, R16 ;prescaler timer 2
 LDI R16, 0x05
 STS TCCR1B, R16 ;prescaler timer 1
 LDI R16, 0x05
 OUT TCCR0B, R16 ;prescaler timer 0
+
+ 
 ;LDI R16, 0x02
 ;OUT TCCR0A, R16 ;CTC MODE
 ;LDI R16, 100
@@ -112,88 +143,86 @@ INIT_BULLETS: ST Y, R16
 			  BRNE INIT_BULLETS
 
 ;Main Function
-Main: CALL display
-	;CALL state_machine_update
+Main: 
+	CALL display
 	CALL load_screen_state
-	LDI LAST_JOY, 0x00
 	SBI PORTC,2
-	LDS R18, 0x0380
+	LDS R18, boss_shoot_status
 	CPI R18, 1
 	BRNE Main
 	CALL BOSS_SHOOT
 RJMP Main
 
-init_screen:
-	LDI ZH, high(CharTable2<<1)
-	LDI ZL, low(CharTable2<<1)
-RET
 
 Display:
-	LDI RowIndex, 0x08 ;index for send1row
+	LDI DummyReg, 0x08
+	STS RowIndex, DummyReg
 	Send1Row:
 		CALL execute_col_loop
 		CALL execute_row_loop
 		CALL Latch_shift_reg
-		DEC RowIndex
+		
+		;Decrement RowIndex
+		LDS DummyReg, RowIndex
+		DEC DummyReg
+		STS RowIndex, DummyReg
 	BRNE Send1Row
 RET
 
-Load_screen_state:
-	CPI STATE_MACHINE, 0x01 ;Joystick went off 
-	BREQ state_0 ; 
-	CPI STATE_MACHINE, 0x02 ;Joystick went off 
-	BREQ state_0 ; 	
-	CPI STATE_MACHINE, 0x03 ;Joystick went off - on - off 
-	BREQ State_1 ; game display
-	CPI STATE_MACHINE, 0x04 ;Joystick went off - on - off 
-	BREQ State_1 ; game display
-	CPI STATE_MACHINE, 0x05 ;Joystick went off - on - off - on - off
-	BREQ State_2 ; game over display
-	CPI STATE_MACHINE, 0x06 ;Joystick went off - on - off - on - off
-	BREQ State_2 ; game over display
-	CPI STATE_MACHINE, 0x07 ;Joystick went off - on - off - on - off - on - off
-	BREQ Reset_state ; reset to start display
-	RET 	
 
-	State_0: ;START
+
+Load_screen_state:
+	LDS DummyReg, SCREEN_STATE
+	CPI DummyReg, start_screen
+	BREQ load_start_screen
+	CPI DummyReg, game_screen
+	BREQ load_game_screen
+	CPI DummyReg, over_screen
+	BREQ load_over_screen
+	CPI DummyReg, win_screen
+	BREQ load_win_screen
+	RET
+	load_start_screen:
 		LDI ZH, high(CharTable1<<1) 
 		LDI ZL, low(CharTable1<<1)
-
-		LDI R18, 5
-		STS 0x0381, R18
-
+		LDI DummyReg, Lives_ship_5
+		STS ship_life, DummyReg
+		LDI DummyReg, Lives_boss_5
+		STS boss_life, DummyReg
+		;----------------------------------------------
+		;-------------Disable timers for this state
 		LDI R16, 0x00
 		STS TIMSK1, R16 ;timer1 interrupt disable
 		STS TIMSK0, R16 ; timer0 interrupt disable
-		RET
-	State_1: ;GAME PLAY
+		STS TIMSK2, R16 ; timer2 interrupt disable
+		;---------------------------------------------
+	RET
+	load_game_screen:
 		LDI R16, 0x01
-		STS TIMSK1, R16 ;timer1 interrupt enable
+		STS TIMSK1, R16 ; timer1 interrupt enable
 		STS TIMSK0, R16 ; timer0 interrupt enable
-
+		STS TIMSK2, R16 ; timer2 interrupt enable
 		CALL CHECK_STATE
-		;CALL UPDATE_BULLETSTATE
-		;CALL BULLET_DELAY
-
-		;SBIC TIFR0, TOV0
-		;rjmp update
-
 		LDI ZH,0x01
 		LDI ZL,0x00
-		RET
-	State_2: ; GAME OVER
+	RET
+	load_over_screen:
 		LDI R16, 0x00
 		STS TIMSK1, R16 ;timer1 interrupt disable
 		STS TIMSK0, R16 ; timer0 interrupt disable
+		STS TIMSK2, R16 ; timer2 interrupt disnable
 		LDI ZH, high(CharTable2<<1)
 		LDI ZL, low(CharTable2<<1)
-		RET	
-	Reset_state:
-	    LDI R16, 0x00
-		STS TIMSK1, R16 ;timer1 interrupt disable
-		LDI STATE_MACHINE, 0x01
-		RET			
 
+	RET	
+	load_win_screen:
+		LDI R16, 0x00
+		STS TIMSK1, R16 ; timer1 interrupt disable
+		STS TIMSK0, R16 ; timer0 interrupt disable
+		STS TIMSK2, R16 ; timer2 interrupt enable
+		LDI ZH, high(CharTable3<<1)
+		LDI ZL, low(CharTable3<<1)
+	RET		
 
 CHECK_STATE: 
 			 IN R18,PIND ; Copy PIND into R18
@@ -201,6 +230,7 @@ CHECK_STATE:
 		     IN R19,PIND ; Copy PIND into R19
 		     RCALL RESET_CONTEXT ; Call reset context 
 		     OR R18,R19 ; R18 OR R19 and store the result in R18
+			 STS BUZZ_PATTERN, R18 ;Storing key pattern
 
 		     CPI R18,BTN2_PATTERN ; If button 2 is pressed
 			 BREQ state_plus_2
@@ -217,38 +247,45 @@ CHECK_STATE:
 			 RET
 
 			 state_plus_2:
-				LDI LAST_KEY, 0x02
+				LDI DummyReg, 0x02
+				STS LAST_KEY, DummyReg
 			 RET
 
 			 state_plus_8:
-				LDI LAST_KEY, 0x04
+				LDI DummyReg, 0x04
+				STS LAST_KEY, DummyReg
 			 RET
 
 			 state_plus_5:
-				LDI LAST_KEY, 0x06
+				LDI DummyReg, 0x06
+				STS LAST_KEY, DummyReg
 			 RET
 
 			 reset_key_state:
-				CPI LAST_KEY,0x02 ; If button 2 is pressed
+				LDS DummyReg, LAST_KEY
+				CPI DummyReg,0x02 ; If button 2 is pressed
 				BREQ go_down
-				CPI LAST_KEY,0x04 ; if button 8 is pressed
+				CPI DummyReg,0x04 ; if button 8 is pressed
 				BREQ go_up
-				CPI LAST_KEY,0x06 ; if button 5 is pressed
+				CPI DummyReg,0x06 ; if button 5 is pressed
 				BREQ ship_shoot
 			 RET
 
 			 go_down:
-				LDI LAST_KEY,0x00
+				LDI DummyReg, 0x00
+				STS LAST_KEY, DummyReg
 				CALL MOVE_DOWN
 			 RET
 
 			 go_up:
-				LDI LAST_KEY,0x00
+				LDI DummyReg, 0x00
+				STS LAST_KEY, DummyReg
 				CALL MOVE_UP
 			 RET
 
 			 ship_shoot:
-				LDI LAST_KEY,0x00
+				LDI DummyReg, 0x00
+				STS LAST_KEY, DummyReg
 				CALL SHOOT
 			 RET
 
@@ -326,6 +363,7 @@ UPDATE_BULLETSTATE: PUSH ZL
 					LDI R20, 4 ; 7th bottom row
 					CALL SHIFT_Z
 					CALL TRACE_BULLET
+					CALL lifeline_to_screenbuff
 							 
 			
 			finish_update:  OUT SREG, R2
@@ -336,7 +374,8 @@ UPDATE_BULLETSTATE: PUSH ZL
 							POP ZL
 							RET
 
-TRACE_BULLET: LD R16, Y ; ship bullet
+TRACE_BULLET:
+			LD R16, Y ; ship bullet
 			LD R17, X ; boss bullet
 			
 			; --------------
@@ -402,16 +441,25 @@ TRACE_BULLET: LD R16, Y ; ship bullet
 
 					 LSR R18
 					 ST Y+, R18
-					 BRCS bossDamaged
+					 BRCC boss_not_hit
 
-					 CLC
-					 LSL R17
-					 ST X, R17
-					 BRCC finish_trace ; problem here regarding X
-					 LDI R17, 0x01
+					; ---- Check if boss is hit
+					DEC ZL
+					LD R18, Z
+					CPI R18, MonsterGunPat
+					BREQ bossDamaged
+					INC ZL
+					; --------------
+
+					 boss_not_hit:
+						CLC
+						LSL R17
+						ST X, R17
+						BRCC finish_trace ; problem here regarding X
+							LDI R17, 0x01
 					 ST -X, R17	 ; move the boss bultt to the next byte if carry is set
 							
-							
+					
 
 				finish_trace: RET
 				; -- if bullets collapse => reset ---
@@ -420,18 +468,26 @@ TRACE_BULLET: LD R16, Y ; ship bullet
 								  ST X, R16
 								  RET
 				; --- if ship is hit by boss bullet -------
-				shipDamaged: LDS R18, 0x0381
-							 DEC R18
+				shipDamaged: LDS R18, ship_life
+							 LSL R18
 							 BREQ game_over
-							 STS 0x0381, R18
+							 STS ship_life, R18
 							 RET
 
-							 game_over: LDI STATE_MACHINE, 0x05 ; game over state
+							 game_over: LDI DummyReg, over_screen
+										STS SCREEN_STATE, DummyReg
 										RET
+
 			   ; ----- Check if boss is hit by ship bullet ---------------
-			   bossDamaged: LDI STATE_MACHINE, 0x05 ; game over state
-							RET	
-										 
+			   bossDamaged:  LDS R18, boss_life
+							 LSR R18
+							 BREQ game_victory
+							 STS boss_life, R18
+							 RET
+
+							 game_victory: LDI DummyReg, win_screen
+										STS SCREEN_STATE, DummyReg
+										RET										 
 										 		
 
 SHOOT: PUSH ZL
@@ -547,7 +603,7 @@ BOSS_SHOOT:		LDI XH, 0x02
 				;CALL UPDATE_BULLETSTATE
 
 				LDI R18, 0
-				STS 0x0380, R18
+				STS boss_shoot_status, R18
 
 				OUT SREG, R2
 				POP R2
@@ -797,9 +853,21 @@ load_game_play_start:
 	STS 0x214, R16
 	CALL InitScreenState
  
+	;Loading initial life line display
+	CALL lifeline_to_screenbuff
+
 	LDI ZL, 0x00 ; Reset
 	LDI ZH, 0x01
 
+RET
+lifeline_to_screenbuff:
+	LDS DummyReg, ship_life
+	LDI ZH, 0x01
+	LDI ZL, ShipLifeLine
+	ST Z, DummyReg
+	LDS DummyReg, boss_life
+	LDI ZL, BossLifeLine
+	ST Z, DummyReg
 RET
 
 InitScreenState: 
@@ -845,19 +913,14 @@ RESET_CONTEXT: LDI R16, 0x0F ; keyboard set
 
 ;Funtion to shift column data on for a pattern
 execute_col_loop:
-	CPI STATE_MACHINE, 0x03 ;Joystick went off - on - off 
-	BREQ screenbuff_display ; game display
-	CPI STATE_MACHINE, 0x04 ;Joystick went off - on - off 
-	BREQ screenbuff_display ; game display
-	;CPI STATE_MACHINE, 0x05 ;Joystick went off - on - off 
-	;BREQ screenbuff_display ; game display
-	;CPI STATE_MACHINE, 0x06 ;Joystick went off - on - off 
-	;BREQ screenbuff_display ; game display
+	LDS DummyReg, SCREEN_STATE
+	CPI DummyReg, game_screen
+	BREQ screenbuff_display
+	RJMP charbuff_display
 	
-	;else display charbuffer:
-	charcuffer_display:
+	charbuff_display:
 		;increment Z till RowIndex for a character is reached
-		MOV Local_index1, RowIndex
+		LDS Local_index1, RowIndex
 		Loop_Z:
 			LPM PAT_COL1, Z+
 			DEC Local_index1
@@ -900,7 +963,7 @@ execute_col_loop:
 		BRNE rev_loop1
 	
 		;increment Z till RowIndex for a character is reached
-		MOV Local_index1, RowIndex
+		LDS Local_index1, RowIndex
 		rev_loop3:
 			LD PAT_COL1, -Z
 			DEC Local_index1
@@ -933,7 +996,8 @@ execute_row_loop:
 	CLC
 	LoopRow:
 		CBI PORTB, 3 
-		CP Local_index1,RowIndex
+		LDS DummyReg, RowIndex
+		CP Local_index1,DummyReg
 		BRNE Row_not_on
 		SBI PORTB, 3 
 		Row_not_on: 
@@ -999,7 +1063,39 @@ POP_PROTECT: OUT SREG, R2
 			 POP ZH
 			 POP ZL
 
-TimerInterrupt: LDI R16, 0xFF
+;R0 and R24 re reserved for this timer interrupt
+;Please use them elsewhere cautiously
+Timer2Interrupt: 
+	IN R0, SREG
+	LDS R24, BUZZ_PATTERN
+	CPI R24, BTN8_PATTERN
+	BREQ MoveKeyPressed
+	CPI R24, BTN5_PATTERN
+	BREQ ShootKeyPressed
+	CPI R24, BTN2_PATTERN
+	BREQ MoveKeyPressed
+	RJMP DefaultSound
+
+	MoveKeyPressed:
+		LDI R24, 0x2E
+		STS TCNT2, R24
+		SBI PINB, 1 ; toggle output of PB1 by setting PINB,1
+		OUT SREG, R0
+		RETI
+	ShootKeyPressed:
+		LDI R24, 0x1E
+		STS TCNT2, R24
+		SBI PINB, 1 ; toggle output of PB1 by setting PINB,1
+		OUT SREG, R0
+		RETI		
+	DefaultSound:
+		LDI R24, 0xFF
+		STS TCNT2, R24
+		SBI PINB, 1 ; toggle output of PB1 by setting PINB,1
+		OUT SREG, R0
+		RETI		
+
+Timer1Interrupt: LDI R16, 0xFF
 				LDI R17, 0xDF
 				STS TCNT1L,R16
 				STS TCNT1H,R17
@@ -1007,7 +1103,7 @@ TimerInterrupt: LDI R16, 0xFF
 				PUSH R18
 
 				LDI R18, 1
-				STS 0x0380, R18
+				STS boss_shoot_status, R18
 
 				POP R18
 				RETI
@@ -1022,13 +1118,36 @@ Timer0interrupt: LDI R17, 1
 				 CBI PORTC, 2
 				 RETI
 
-JoystickInterrupt: ;CBI PORTC, 2
-				   SBRS LAST_JOY, 0 ;skip state change if previous JS state was same as on
-				   INC STATE_MACHINE
-				   LDI LAST_JOY,0x01
-				   LDI R16, 0x00
-				   OUT PCIFR, R16 ; reset
-				   RETI
+JoystickInterrupt:				
+					LDS DummyReg, JOY_STK_STATE		;Stores last state of joystick for change after two actions on interrupt
+					SBRS DummyReg, 0				; skip state increase if previous state was joy stick not pressed
+					CALL increment_state
+					LDS DummyReg, JOY_STK_STATE
+					INC DummyReg
+					STS JOY_STK_STATE, DummyReg
+				    LDI R16, 0x00
+				    OUT PCIFR, R16 ; reset interrupt
+					RETI										
+
+increment_state:
+	LDS DummyReg, SCREEN_STATE
+	CPI DummyReg, start_screen
+	BREQ to_next_state
+	CPI DummyReg, game_screen
+	BREQ to_next_state
+	CPI DummyReg, over_screen
+	BREQ to_start_state
+	CPI DummyReg, win_screen
+	BREQ to_start_state
+
+	to_next_state:
+		INC DummyReg
+		STS SCREEN_STATE, DummyReg
+		RET
+	to_start_state:
+		LDI DummyReg, start_screen
+		STS SCREEN_STATE, DummyReg
+		RET
 
 ;character memory table
 ;Stores >START!
@@ -1071,21 +1190,19 @@ CharTable2:
 .DB 0b00110, 0b01001, 0b01000, 0b01011, 0b01001, 0b01001, 0b00110, 0b00000 ;G
 
 CharTable3:
-.DB 0b00000, 0b00100, 0b00010, 0b00001, 0b00010, 0b00100, 0b00000, 0b00000 ;small arrow
-.DB 0b00000, 0b00100, 0b00010, 0b00001, 0b00010, 0b00100, 0b00000, 0b00000 ;small arrow
-.DB 0b01111, 0b01000, 0b01000, 0b01111, 0b01000, 0b01000, 0b01111, 0b00000 ;E
-.DB 0b10001, 0b11011, 0b10101, 0b10001, 0b10001, 0b10001, 0b10001, 0b00000 ;M
-.DB 0b00110, 0b01001, 0b01001, 0b01111, 0b01001, 0b01001, 0b01001, 0b00000 ;A
-.DB 0b00110, 0b01001, 0b01000, 0b01011, 0b01001, 0b01001, 0b00110, 0b00000 ;G
-.DB 0b00000, 0b00100, 0b00010, 0b00001, 0b00010, 0b00100, 0b00000, 0b00000 ;small arrow
-.DB 0b00000, 0b00100, 0b00010, 0b00001, 0b00010, 0b00100, 0b00000, 0b00000 ;small arrow
-.DB 0b00000, 0b00100, 0b00010, 0b00001, 0b00010, 0b00100, 0b00000, 0b00000 ;small arrow
-.DB 0b00000, 0b00100, 0b00010, 0b00001, 0b00010, 0b00100, 0b00000, 0b00000 ;small arrow
-.DB 0b01111, 0b01000, 0b01000, 0b01111, 0b01000, 0b01000, 0b01111, 0b00000 ;E
-.DB 0b10001, 0b11011, 0b10101, 0b10001, 0b10001, 0b10001, 0b10001, 0b00000 ;M
-.DB 0b00110, 0b01001, 0b01001, 0b01111, 0b01001, 0b01001, 0b01001, 0b00000 ;A
-.DB 0b00110, 0b01001, 0b01000, 0b01011, 0b01001, 0b01001, 0b00110, 0b00000 ;G
-.DB 0b00000, 0b00100, 0b00010, 0b00001, 0b00010, 0b00100, 0b00000, 0b00000 ;small arrow
-.DB 0b00000, 0b00100, 0b00010, 0b00001, 0b00010, 0b00100, 0b00000, 0b00000 ;small arrow
+.DB 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000 ;Nothing
+.DB 0b00000, 0b00100, 0b01110, 0b11011, 0b01110, 0b00100, 0b00000, 0b00000 ;Diamond
+.DB 0b00000, 0b00100, 0b01110, 0b11011, 0b01110, 0b00100, 0b00000, 0b00000 ;Diamond
+.DB 0b00000, 0b00100, 0b01110, 0b11011, 0b01110, 0b00100, 0b00000, 0b00000 ;Diamond
+.DB 0b00000, 0b00100, 0b01110, 0b11011, 0b01110, 0b00100, 0b00000, 0b00000 ;Diamond
+.DB 0b00000, 0b00100, 0b01110, 0b11011, 0b01110, 0b00100, 0b00000, 0b00000 ;Diamond
+.DB 0b00000, 0b00100, 0b01110, 0b11011, 0b01110, 0b00100, 0b00000, 0b00000 ;Diamond
+.DB 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000 ;Nothing
+.DB 0b10001, 0b10001, 0b11001, 0b10101, 0b10011, 0b10001, 0b10001, 0b10000 ;N
+.DB 0b01110, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b01110, 0b00000 ;I
+.DB 0b10001, 0b10001, 0b10001, 0b10001, 0b10101, 0b11011, 0b10001, 0b00000 ;W
 .DB 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000 ;Nothing
 .DB 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000 ;Nothing
+.DB 0b01001, 0b01001, 0b01001, 0b01001, 0b01001, 0b01001, 0b00110, 0b00000 ;U
+.DB 0b00110, 0b01001, 0b01001, 0b01001, 0b01001, 0b01001, 0b00110, 0b00000 ;0
+.DB 0b10001, 0b01010, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100 ;Y
