@@ -132,6 +132,13 @@ STS TCCR1B, R16 ;prescaler timer 1
 LDI R16, 0x05
 OUT TCCR0B, R16 ;prescaler timer 0
 
+LDI R16, 0xFF
+LDI R17, 0xEF
+STS TCNT1L,R16
+STS TCNT1H,R17
+
+LDI R16, 1
+STS TIMSK1, R16
 
 ;LDI R16, 0x02
 ;OUT TCCR0A, R16 ;CTC MODE
@@ -209,7 +216,7 @@ Load_screen_state:
     ;----------------------------------------------
     ;-------------Disable timers for this state
     LDI R16, 0x00
-    STS TIMSK1, R16 ;timer1 interrupt disable
+    ;STS TIMSK1, R16 ;timer1 interrupt disable
     STS TIMSK0, R16 ; timer0 interrupt disable
     STS TIMSK2, R16 ; timer2 interrupt disable
     ;---------------------------------------------
@@ -311,6 +318,7 @@ UPDATE_BULLETSTATE: PUSH ZL
           PUSH R18
           PUSH R20
           PUSH R2
+		  PUSH DummyReg
           IN R2, SREG
           LDI ZL, 0x0A
           LDI YH, 0x02
@@ -384,12 +392,13 @@ UPDATE_BULLETSTATE: PUSH ZL
 
 
       finish_update:  OUT SREG, R2
-              POP R2
-              POP R20
-              POP R18
-              POP ZH
-              POP ZL
-              RET
+					POP DummyReg
+					POP R2
+					POP R20
+					POP R18
+					POP ZH
+					POP ZL
+					RET
 
 TRACE_BULLET:
       LD R16, Y ; ship bullet
@@ -790,10 +799,6 @@ MOVE_UP:
 
 RET
 
-
-
-
-
 load_game_play_start:
   LDI ZL, 0x00
   LDI ZH, 0x01
@@ -1138,15 +1143,21 @@ Timer2Interrupt:
        POP R1
         RETI
 
-Timer1Interrupt: LDI R16, 0xFF
+Timer1Interrupt: PUSH R2
+        PUSH R18
+		PUSH R16
+		PUSH R17
+		IN R2, SREG
+
+		LDI R16, 0xFF
         LDI R17, 0xEF
         STS TCNT1L,R16
         STS TCNT1H,R17
 
-		PUSH R2
-        PUSH R18
-		PUSH R16
-		IN R2, SREG
+		LDS R16, SCREEN_STATE
+		CPI R16, start_screen
+		BREQ exit_timer1
+		
 
         LDI R18, 1
         STS boss_shoot_status, R18
@@ -1166,14 +1177,15 @@ Timer1Interrupt: LDI R16, 0xFF
 		 OR DummyReg, R16
 		 STS RANDOM_NUMBER, DummyReg
 
-		 OUT SREG, R2
+		exit_timer1: OUT SREG, R2
+					POP R17
+					POP R16
+					POP R18
+					POP R2
+					RETI
 
-        POP R16
-		POP R18
-		POP R2
-        RETI
-
-Timer0interrupt: LDI R17, 1
+Timer0interrupt: 
+		 LDI R17, 1
          OUT TCNT0,R17
 ;        ;CALL DISPLAY_INTERMEDIATE_STATE
          CALL UPDATE_BULLETSTATE
@@ -1184,9 +1196,17 @@ Timer0interrupt: LDI R17, 1
          RETI
 
 JoystickInterrupt:
+		  PUSH R0
+		  PUSH DummyReg
+		  IN R0, SREG
+
           LDS DummyReg, SCREEN_STATE
           CPI DummyReg, game_screen ; while playing can't switch state here
           BRNE next_state
+
+		  OUT SREG, R0
+		  POP DummyReg
+		  POP R0
           RETI
 
           next_state: LDS DummyReg, JOY_STK_STATE   ;Stores last state of joystick for change after two actions on interrupt
@@ -1197,7 +1217,11 @@ JoystickInterrupt:
           STS JOY_STK_STATE, DummyReg
             LDI R16, 0x00
             OUT PCIFR, R16 ; reset interrupt
-          RETI
+          
+		  OUT SREG, R0
+		  POP DummyReg
+		  POP R0
+		  RETI
 
 increment_state:
   LDS DummyReg, SCREEN_STATE
