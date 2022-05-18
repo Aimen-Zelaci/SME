@@ -1,4 +1,4 @@
-;
+
 ; UC GAME PROJECT
 ;
 ; Created: 24-04-2022 10:35:44
@@ -37,6 +37,12 @@ RJMP Init ; First instruction that is executed by the microcontroller
 .EQU SEED = 9 ; Random seed for random bit generation
 .EQU RANDOM_NUMBER = 0x0388 ; Random number resulting from PSRG
 
+.EQU UP_STATE = 0x0389
+.EQU DOWN_STATE = 0x0390
+.EQU MOVE_STATE = 0x0391
+.EQU DOWN_STATE_TIMED = 0x0392
+.EQU UP_STATE_TIMED = 0x0393
+
 ;keyboard patterns
 .EQU BTN8_PATTERN = 0b01111011 ; Button 8 pressed pattern
 .EQU BTN7_PATTERN = 0b01110111 ; Button 7 pressed pattern
@@ -58,7 +64,7 @@ RJMP Init ; First instruction that is executed by the microcontroller
 .EQU ShipLifeLine = 0x4E  ;Location of ship lifeline on screenbuffer
 .EQU BossLifeLine = 0x4C  ;Location of boss lifeline on screenbuffer
 .EQU Lives_ship_5 = 0b11000000 ;lives remaining
-.EQU Lives_boss_5 = 0b00011111 ;lives remaining
+.EQU Lives_boss_5 = 0b00011111 ;lives remaing
 
 ; Interrupts
 .ORG 0x0006
@@ -73,7 +79,8 @@ rjmp Timer1Interrupt
 .ORG 0x0020
 rjmp Timer0interrupt
 
-
+.org 0x002A
+rjmp AdcInterrupt
 
 Init:
 ; Configure output pin PB3
@@ -97,6 +104,8 @@ OUT PORTD, R16 ; Init keyboard. set all rows to ground and cols to 1
 ;LED
 SBI DDRC, 2
 SBI PORTC,2
+SBI DDRC, 3
+SBI PORTC,3
 
 ;configure output buzzer in PB1
 SBI DDRB,1; output pin
@@ -122,7 +131,11 @@ STS RANDOM_NUMBER, DummyReg ; init random number to be the seed
 ;Establishing start screen
 CALL Load_game_play_start
 
-SEI ;Set golabl interrupt
+LDI R16, 0b1110_1011 ;[ADEN,ADSC,ADATE,ADIF,_,ADIE,ADPS2,ADPS1,ADPS0]
+STS ADCSRA, R16 ;START ANALOG TO DIGITAL CONVERSION
+LDI R16, 0b0110_0001; [REFS1, REFS0, ADLAR, -, _ , MUX3, MUX2, MUX1, MUX0]
+STS ADMUX, R16
+
 ; timer1Interrupt /* Timer interrupt enabled inside machine state*/
 
 LDI R16, 0x05
@@ -151,6 +164,8 @@ LDI R17, 4
 STS PCICR, R16
 STS PCMSK0, R17
 
+SEI ;Set golabl interrupt
+
 ; INIT BOSS ACTIVE GUN COUNTER = it has 6 guns
 LDI BOSS_SHIPCOUNTER, 6
 
@@ -170,13 +185,28 @@ INIT_BULLETS: ST Y, R16
 Main:
   CALL display
   CALL load_screen_state
-  SBI PORTC,2
+  LDI Local_index1, 255 ;index for delay loop
+  ;SBI PORTC,2
+  LDS R18, DOWN_STATE_TIMED
+  CPI R18, 0
+  BREQ dont_move_down
+  CALL MOVE_DOWN
+  dont_move_down: LDI R18, 0
+			 STS DOWN_STATE_TIMED, R18
+
+   LDS R18, UP_STATE_TIMED
+  CPI R18, 0
+  BREQ dont_move_up
+  CALL MOVE_UP
+  dont_move_up: LDI R18, 0
+			 STS UP_STATE_TIMED, R18
+
   LDS R18, boss_shoot_status
   CPI R18, 1
   BRNE Main
   CALL BOSS_SHOOT
 RJMP Main
-
+	
 
 Display:
   LDI DummyReg, 0x08
@@ -259,8 +289,16 @@ CHECK_STATE:
          CPI R18,BTN2_PATTERN ; If button 2 is pressed
        BREQ state_plus_2
 
+	     ;LDS DummyReg, DOWN_STATE
+		 ;CPI DummyReg, 1
+		 ;BREQ state_plus_2
+
          CPI R18,BTN8_PATTERN ; If button 8 is pressed
          BREQ state_plus_8
+
+		; LDS DummyReg, UP_STATE
+		 ;CPI DummyReg, 1
+		 ;BREQ state_plus_8
 
        CPI R18,BTN5_PATTERN ; If button 5 is pressed
          BREQ state_plus_5
@@ -273,11 +311,15 @@ CHECK_STATE:
        state_plus_2:
         LDI DummyReg, 0x02
         STS LAST_KEY, DummyReg
+		LDI DummyReg, 0
+		STS DOWN_STATE, DummyReg
        RET
 
        state_plus_8:
         LDI DummyReg, 0x04
         STS LAST_KEY, DummyReg
+		LDI DummyReg, 0
+		STS UP_STATE, DummyReg
        RET
 
        state_plus_5:
@@ -640,6 +682,9 @@ BOSS_SHOOT:   LDI XH, 0x02
       RET
 
 MOVE_DOWN:
+  PUSH ZL
+  PUSH ZH
+  PUSH DummyReg
 
   LDI ZH, 0x01
 
@@ -717,9 +762,15 @@ MOVE_DOWN:
   ;Restoring Z
   LDI ZL, 0x00
 
+  POP DummyReg
+  POP ZH
+  POP ZL
 RET
 
 MOVE_UP:
+  PUSH ZL
+  PUSH ZH
+  PUSH DummyReg
 
   LDI ZH, 0x01
 
@@ -796,7 +847,9 @@ MOVE_UP:
 
   ;Restoring Z
   LDI ZL, 0x00
-
+  POP DummyReg
+  POP ZH
+  POP ZL
 RET
 
 load_game_play_start:
@@ -1185,14 +1238,46 @@ Timer1Interrupt: PUSH R2
 					RETI
 
 Timer0interrupt: 
+	     PUSH R17
+		 PUSH R18
+		 PUSH R2
+		 IN R2, SREG
+
 		 LDI R17, 1
          OUT TCNT0,R17
+		 
 ;        ;CALL DISPLAY_INTERMEDIATE_STATE
          CALL UPDATE_BULLETSTATE
+	 
+	 LDI R17, 1
+		LDS R18, MOVE_STATE
+		EOR R18, R17
+		STS MOVE_STATE, R18
+
+		 
+		 LDS R17, DOWN_STATE
+		 CPI R17, 1
+		 BRNE dont_go_down
+		 LDI R17, 0
+		 STS DOWN_STATE, R17
+		 LDI R17, 1
+		 STS DOWN_STATE_TIMED, R17
+		 dont_go_down: LDS R17, UP_STATE
+					  CPI R17, 1
+					 BRNE dont_go_up
+					 LDI R17, 1
+					 STS UP_STATE_TIMED, R17
+					 LDI R17, 0
+					 STS UP_STATE, R17
+		 dont_go_up: 	
 ;        ;CALL CHECK_STATE
 ;        LDI ZH,0x01
 ;        LDI ZL,0x00
-         CBI PORTC, 2
+        ; CBI PORTC, 2
+		OUT SREG, R2
+		POP R2
+		POP R18
+		POP R17
          RETI
 
 JoystickInterrupt:
@@ -1222,6 +1307,51 @@ JoystickInterrupt:
 		  POP DummyReg
 		  POP R0
 		  RETI
+
+AdcInterrupt: PUSH R16
+			  PUSH R17
+			  PUSH R2
+			  IN R2, SREG
+
+			  LDS R17, MOVE_STATE
+			  CPI R17, 0
+			  BREQ quit
+
+
+			  LDS R16, ADCL
+			  LDS R17, ADCH
+
+			  CPI R17, 60
+			  BRLO exit2
+
+		SBI PORTC, 3
+
+		CPI R17, 200
+		BRLO exit1
+
+		CBI PORTC, 2
+		; - triggger a move down -
+		LDI R16, 1 
+		STS DOWN_STATE, R16
+	
+		rjmp quit
+
+		exit1:  SBI PORTC, 2
+				rjmp quit
+
+		exit2:    CBI PORTC, 3
+		 			; - triggger a move up -
+					LDI R16, 1
+					STS UP_STATE, R16
+
+			quit:	LDI R16, 0b1110_1011 ;[ADEN,ADSC,ADATE,ADIF,_,ADIE,ADPS2,ADPS1,ADPS0]
+					STS ADCSRA, R16 ;START ANALOG TO DIGITAL CONVERSION
+					
+					OUT SREG, R2
+					POP R2
+					POP R17
+					POP R16
+					RETI
 
 increment_state:
   LDS DummyReg, SCREEN_STATE
