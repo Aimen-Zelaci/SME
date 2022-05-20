@@ -1,19 +1,19 @@
 <ASSEMBLER_INFO>
  <VERSION>2.2.8</VERSION>
  <DEVICE>"ATmega328P"</DEVICE>
- <WORKING_DIR>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\Debug</WORKING_DIR>
+ <WORKING_DIR>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\Debug</WORKING_DIR>
  <INCLUDE_PATH>
   <DIR>C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.6.364\avrasm\inc</DIR>
   <DIR>C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avrassembler\Include</DIR>
   <DIR></DIR>
  </INCLUDE_PATH>
- <SOURCE_FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</SOURCE_FILE>
+ <SOURCE_FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</SOURCE_FILE>
  <INCLUDED_FILES>
   <FILE>C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.6.364\avrasm\inc\m328Pdef.inc</FILE>
   <FILE>C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.6.364\avrasm\inc\m328pdef.inc</FILE>
  </INCLUDED_FILES>
  <OBJECT_FILES>
-  <FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\Debug\AssemblerApplication1.obj</FILE>
+  <FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\Debug\AssemblerApplication1.obj</FILE>
  </OBJECT_FILES>
  <HEX_FILES>
   <FILE>AssemblerApplication1.hex</FILE>
@@ -23,99 +23,114 @@
   <FILE>AssemblerApplication1.lss</FILE>
  </OUTPUT_FILES>
  <LABELS>
-  <Init><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>74</LINE></Init>
-  <JoystickInterrupt><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1121</LINE></JoystickInterrupt>
-  <Timer2interrupt><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1068</LINE></Timer2interrupt>
-  <Timer1Interrupt><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1098</LINE></Timer1Interrupt>
-  <Timer0interrupt><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1111</LINE></Timer0interrupt>
-  <Load_game_play_start><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>780</LINE></Load_game_play_start>
-  <INIT_BULLETS><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>140</LINE></INIT_BULLETS>
-  <Main><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>146</LINE></Main>
-  <display><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>157</LINE></display>
-  <load_screen_state><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>174</LINE></load_screen_state>
-  <BOSS_SHOOT><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>557</LINE></BOSS_SHOOT>
-  <Send1Row><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>160</LINE></Send1Row>
-  <execute_col_loop><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>915</LINE></execute_col_loop>
-  <execute_row_loop><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>994</LINE></execute_row_loop>
-  <Latch_shift_reg><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1011</LINE></Latch_shift_reg>
-  <load_start_screen><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>185</LINE></load_start_screen>
-  <load_game_screen><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>200</LINE></load_game_screen>
-  <load_over_screen><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>209</LINE></load_over_screen>
-  <load_win_screen><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>218</LINE></load_win_screen>
-  <CharTable1><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1155</LINE></CharTable1>
-  <CHECK_STATE><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>227</LINE></CHECK_STATE>
-  <CharTable2><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1174</LINE></CharTable2>
-  <CharTable3><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1192</LINE></CharTable3>
-  <CONTEXT_SWITCH><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>897</LINE></CONTEXT_SWITCH>
-  <RESET_CONTEXT><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>906</LINE></RESET_CONTEXT>
-  <state_plus_2><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>249</LINE></state_plus_2>
-  <state_plus_8><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>254</LINE></state_plus_8>
-  <state_plus_5><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>259</LINE></state_plus_5>
-  <reset_key_state><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>264</LINE></reset_key_state>
-  <go_down><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>274</LINE></go_down>
-  <go_up><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>280</LINE></go_up>
-  <ship_shoot><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>286</LINE></ship_shoot>
-  <MOVE_DOWN><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>616</LINE></MOVE_DOWN>
-  <MOVE_UP><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>696</LINE></MOVE_UP>
-  <SHOOT><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>493</LINE></SHOOT>
-  <UPDATE_BULLETSTATE><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>292</LINE></UPDATE_BULLETSTATE>
-  <SHIFT_Z><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1022</LINE></SHIFT_Z>
-  <TRACE_BULLET><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>377</LINE></TRACE_BULLET>
-  <lifeline_to_screenbuff><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>863</LINE></lifeline_to_screenbuff>
-  <finish_update><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>369</LINE></finish_update>
-  <continue><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>390</LINE></continue>
-  <bullets_collapse><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>466</LINE></bullets_collapse>
-  <shipNotHit><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>407</LINE></shipNotHit>
-  <shipDamaged><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>471</LINE></shipDamaged>
-  <next><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>415</LINE></next>
-  <bossBullet><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>427</LINE></bossBullet>
-  <next3><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>435</LINE></next3>
-  <boss_not_hit><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>454</LINE></boss_not_hit>
-  <bossDamaged><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>482</LINE></bossDamaged>
-  <finish_trace><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>464</LINE></finish_trace>
-  <game_over><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>477</LINE></game_over>
-  <game_victory><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>488</LINE></game_victory>
-  <SHIP_FIRE><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>546</LINE></SHIP_FIRE>
-  <finish_shooting><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>540</LINE></finish_shooting>
-  <DONT_FIRE><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>552</LINE></DONT_FIRE>
-  <PAT1><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>585</LINE></PAT1>
-  <PAT2><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>587</LINE></PAT2>
-  <PAT3><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>589</LINE></PAT3>
-  <PAT4><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>591</LINE></PAT4>
-  <PAT5><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>593</LINE></PAT5>
-  <PAT6><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>595</LINE></PAT6>
-  <boss_fire><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>597</LINE></boss_fire>
-  <InitScreenState><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>873</LINE></InitScreenState>
-  <SECOND_ROW><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>838</LINE></SECOND_ROW>
-  <LOOP_BUFF><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>880</LINE></LOOP_BUFF>
-  <LOOP_BUFF1_><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>888</LINE></LOOP_BUFF1_>
-  <screenbuff_display><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>973</LINE></screenbuff_display>
-  <charbuff_display><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>921</LINE></charbuff_display>
-  <Loop_Z><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>924</LINE></Loop_Z>
-  <Col_loop2><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>930</LINE></Col_loop2>
-  <Col_loop3><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>933</LINE></Col_loop3>
-  <Loop_Z2><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>945</LINE></Loop_Z2>
-  <rev_loop1><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>955</LINE></rev_loop1>
-  <rev_loop2><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>958</LINE></rev_loop2>
-  <rev_loop3><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>967</LINE></rev_loop3>
-  <Col_loop4><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>975</LINE></Col_loop4>
-  <Col_loop5><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>979</LINE></Col_loop5>
-  <LoopRow><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>997</LINE></LoopRow>
-  <Row_not_on><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1003</LINE></Row_not_on>
-  <delay_loop><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1015</LINE></delay_loop>
-  <INC_LOOP><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1024</LINE></INC_LOOP>
-  <BULLET_DELAY><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1030</LINE></BULLET_DELAY>
-  <BLOOP><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1031</LINE></BLOOP>
-  <BNESTED><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1033</LINE></BNESTED>
-  <DISPLAY_INTERMEDIATE_STATE><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1040</LINE></DISPLAY_INTERMEDIATE_STATE>
-  <SEND_DATA><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1042</LINE></SEND_DATA>
-  <PUSH_PROTECT><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1052</LINE></PUSH_PROTECT>
-  <POP_PROTECT><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1059</LINE></POP_PROTECT>
-  <MoveKeyPressed><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1079</LINE></MoveKeyPressed>
-  <ShootKeyPressed><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1085</LINE></ShootKeyPressed>
-  <DefaultSound><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1091</LINE></DefaultSound>
-  <increment_state><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1132</LINE></increment_state>
-  <to_next_state><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1143</LINE></to_next_state>
-  <to_start_state><FILE>C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1147</LINE></to_start_state>
+  <Init><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>85</LINE></Init>
+  <JoystickInterrupt><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1276</LINE></JoystickInterrupt>
+  <Timer2interrupt><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1134</LINE></Timer2interrupt>
+  <Timer1Interrupt><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1179</LINE></Timer1Interrupt>
+  <Timer0interrupt><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1232</LINE></Timer0interrupt>
+  <AdcInterrupt><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1301</LINE></AdcInterrupt>
+  <Load_game_play_start><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>851</LINE></Load_game_play_start>
+  <Main><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>176</LINE></Main>
+  <display><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>202</LINE></display>
+  <load_screen_state><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>219</LINE></load_screen_state>
+  <dont_move_down><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>185</LINE></dont_move_down>
+  <MOVE_DOWN><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>680</LINE></MOVE_DOWN>
+  <dont_move_up><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>192</LINE></dont_move_up>
+  <MOVE_UP><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>766</LINE></MOVE_UP>
+  <BOSS_SHOOT><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>626</LINE></BOSS_SHOOT>
+  <Send1Row><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>205</LINE></Send1Row>
+  <execute_col_loop><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>986</LINE></execute_col_loop>
+  <execute_row_loop><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1065</LINE></execute_row_loop>
+  <Latch_shift_reg><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1082</LINE></Latch_shift_reg>
+  <load_start_screen><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>230</LINE></load_start_screen>
+  <load_game_screen><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>245</LINE></load_game_screen>
+  <load_over_screen><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>254</LINE></load_over_screen>
+  <load_win_screen><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>263</LINE></load_win_screen>
+  <CharTable1><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1380</LINE></CharTable1>
+  <CHECK_STATE><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>272</LINE></CHECK_STATE>
+  <CharTable2><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1399</LINE></CharTable2>
+  <CharTable3><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1417</LINE></CharTable3>
+  <CONTEXT_SWITCH><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>968</LINE></CONTEXT_SWITCH>
+  <RESET_CONTEXT><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>977</LINE></RESET_CONTEXT>
+  <state_plus_2><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>302</LINE></state_plus_2>
+  <state_plus_8><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>309</LINE></state_plus_8>
+  <state_plus_5><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>316</LINE></state_plus_5>
+  <reset_key_state><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>321</LINE></reset_key_state>
+  <go_down><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>331</LINE></go_down>
+  <go_up><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>337</LINE></go_up>
+  <ship_shoot><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>343</LINE></ship_shoot>
+  <SHOOT><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>557</LINE></SHOOT>
+  <UPDATE_BULLETSTATE><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>349</LINE></UPDATE_BULLETSTATE>
+  <SHIFT_Z><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1093</LINE></SHIFT_Z>
+  <TRACE_BULLET><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>441</LINE></TRACE_BULLET>
+  <lifeline_to_screenbuff><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>934</LINE></lifeline_to_screenbuff>
+  <finish_update><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>430</LINE></finish_update>
+  <continue><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>454</LINE></continue>
+  <bullets_collapse><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>530</LINE></bullets_collapse>
+  <shipNotHit><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>471</LINE></shipNotHit>
+  <shipDamaged><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>535</LINE></shipDamaged>
+  <next><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>479</LINE></next>
+  <bossBullet><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>491</LINE></bossBullet>
+  <next3><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>499</LINE></next3>
+  <boss_not_hit><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>518</LINE></boss_not_hit>
+  <bossDamaged><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>546</LINE></bossDamaged>
+  <finish_trace><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>528</LINE></finish_trace>
+  <game_over><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>541</LINE></game_over>
+  <game_victory><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>552</LINE></game_victory>
+  <SHIP_FIRE><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>615</LINE></SHIP_FIRE>
+  <finish_shooting><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>607</LINE></finish_shooting>
+  <DONT_FIRE><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>621</LINE></DONT_FIRE>
+  <PAT1><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>651</LINE></PAT1>
+  <PAT2><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>653</LINE></PAT2>
+  <PAT3><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>655</LINE></PAT3>
+  <PAT4><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>657</LINE></PAT4>
+  <PAT5><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>659</LINE></PAT5>
+  <PAT6><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>661</LINE></PAT6>
+  <exit_boss_shoot><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>672</LINE></exit_boss_shoot>
+  <boss_fire><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>663</LINE></boss_fire>
+  <InitScreenState><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>944</LINE></InitScreenState>
+  <SECOND_ROW><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>909</LINE></SECOND_ROW>
+  <LOOP_BUFF><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>951</LINE></LOOP_BUFF>
+  <LOOP_BUFF1_><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>959</LINE></LOOP_BUFF1_>
+  <screenbuff_display><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1044</LINE></screenbuff_display>
+  <charbuff_display><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>992</LINE></charbuff_display>
+  <Loop_Z><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>995</LINE></Loop_Z>
+  <Col_loop2><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1001</LINE></Col_loop2>
+  <Col_loop3><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1004</LINE></Col_loop3>
+  <Loop_Z2><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1016</LINE></Loop_Z2>
+  <rev_loop1><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1026</LINE></rev_loop1>
+  <rev_loop2><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1029</LINE></rev_loop2>
+  <rev_loop3><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1038</LINE></rev_loop3>
+  <Col_loop4><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1046</LINE></Col_loop4>
+  <Col_loop5><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1050</LINE></Col_loop5>
+  <LoopRow><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1068</LINE></LoopRow>
+  <Row_not_on><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1074</LINE></Row_not_on>
+  <delay_loop><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1086</LINE></delay_loop>
+  <INC_LOOP><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1095</LINE></INC_LOOP>
+  <BULLET_DELAY><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1101</LINE></BULLET_DELAY>
+  <BLOOP><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1102</LINE></BLOOP>
+  <BNESTED><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1104</LINE></BNESTED>
+  <DISPLAY_INTERMEDIATE_STATE><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1111</LINE></DISPLAY_INTERMEDIATE_STATE>
+  <SEND_DATA><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1113</LINE></SEND_DATA>
+  <CLEAR_SCREEN><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1122</LINE></CLEAR_SCREEN>
+  <clear_screen_loop><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1126</LINE></clear_screen_loop>
+  <MoveKeyPressed><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1152</LINE></MoveKeyPressed>
+  <ShootKeyPressed><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1157</LINE></ShootKeyPressed>
+  <DefaultSound><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1162</LINE></DefaultSound>
+  <exit_timer2><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1173</LINE></exit_timer2>
+  <silence><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1170</LINE></silence>
+  <exit_timer1><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1224</LINE></exit_timer1>
+  <dont_go_down><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1258</LINE></dont_go_down>
+  <dont_go_up><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1265</LINE></dont_go_up>
+  <next_state><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1287</LINE></next_state>
+  <exit_joystick_interrupt><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1296</LINE></exit_joystick_interrupt>
+  <increment_state><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1346</LINE></increment_state>
+  <quit><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1337</LINE></quit>
+  <trigger_up><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1332</LINE></trigger_up>
+  <no_trigger><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1329</LINE></no_trigger>
+  <to_next_state><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1357</LINE></to_next_state>
+  <to_start_state><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1372</LINE></to_start_state>
+  <INIT_BULLETS><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1367</LINE></INIT_BULLETS>
+  <NotesTable><FILE>C:\Users\Slash\Downloads\SME\ships_design\AssemblerApplication1\main.asm</FILE><LINE>1436</LINE></NotesTable>
  </LABELS>
 </ASSEMBLER_INFO>

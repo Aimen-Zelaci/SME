@@ -140,10 +140,10 @@ STS ADMUX, R16
 
 LDI R16, 0x05
 STS TCCR2B, R16 ;prescaler timer 2
+LDI R16, 0x04
+STS TCCR1B, R16 ;prescaler timer 1: decides when to shoot
 LDI R16, 0x05
-STS TCCR1B, R16 ;prescaler timer 1
-LDI R16, 0x05
-OUT TCCR0B, R16 ;prescaler timer 0
+OUT TCCR0B, R16 ;prescaler timer 0: decides how fast the bullets move
 
 LDI R16, 0xFF
 LDI R17, 0xEF
@@ -169,18 +169,9 @@ SEI ;Set golabl interrupt
 ; INIT BOSS ACTIVE GUN COUNTER = it has 6 guns
 LDI BOSS_SHIPCOUNTER, 6
 
-LDI XH, 0x02
-LDI YH, 0x02
-LDI YL, 0x50
-LDI XL, 0x90
 
-LDI local_index1, 20
-LDI R16, 0x00
-INIT_BULLETS: ST Y, R16
-        ST X, R16
-        DEC local_index1
-        BRNE INIT_BULLETS
-
+;LDI YL, LOW(NotesTable<<1)
+;LDI YH, HIGH(NOTESTable<<1)
 ;Main Function
 Main:
   CALL display
@@ -357,11 +348,14 @@ CHECK_STATE:
 
 UPDATE_BULLETSTATE: PUSH ZL
             PUSH ZH
+			PUSH YL
+			PUSH YH
           PUSH R18
           PUSH R20
           PUSH R2
 		  PUSH DummyReg
           IN R2, SREG
+
           LDI ZL, 0x0A
           LDI YH, 0x02
           LDI XH, 0x02
@@ -438,6 +432,8 @@ UPDATE_BULLETSTATE: PUSH ZL
 					POP R2
 					POP R20
 					POP R18
+					POP YH
+					POP YL
 					POP ZH
 					POP ZL
 					RET
@@ -560,9 +556,12 @@ TRACE_BULLET:
 
 SHOOT: PUSH ZL
      PUSH ZH
+	 PUSH YL
+	 PUSH YH
      PUSH R2
      IN R2, SREG
      LDI ZL, 0x0A
+	 LDI YH, 0x02
      LDI YL, 0x50
 
      LDD R16, Z+49
@@ -607,6 +606,8 @@ SHOOT: PUSH ZL
 
      finish_shooting: OUT SREG, R2
             POP R2
+			POP YH
+			POP YL
             POP ZH
             POP ZL
             RET
@@ -645,12 +646,7 @@ BOSS_SHOOT:   LDI XH, 0x02
         BREQ PAT6
 
         ;LDI BOSS_SHIPCOUNTER, 6 ; reset
-        OUT SREG, R2
-        POP R2
-        POP R18
-        POP ZH
-        POP ZL
-        RETI
+		rjmp exit_boss_shoot
 
         PAT1: LDI XL, 0x92
             RJMP boss_fire
@@ -673,9 +669,9 @@ BOSS_SHOOT:   LDI XH, 0x02
       LDI R18, 0
       STS boss_shoot_status, R18
 
-      OUT SREG, R2
+     exit_boss_shoot: OUT SREG, R2
       POP R2
-        POP R18
+      POP R18
       POP ZH
       POP ZL
 
@@ -1121,27 +1117,17 @@ DISPLAY_INTERMEDIATE_STATE: LDI R17, 88
           CBI PORTB, 4
           SBI PORTB, 4
           CBI PORTB, 4
-
-
           RET
-PUSH_PROTECT: PUSH ZL
-        PUSH ZH
-        PUSH R2
-        PUSH R18
-        PUSH R20
-        PUSH R24
-        IN R2, SREG
-        RET
 
-POP_PROTECT: OUT SREG, R2
-       POP R24
-       POP R20
-       POP R18
-       POP R2
-       POP ZH
-       POP ZL
+CLEAR_SCREEN: LDI ZL, 0x00
+			  LDI ZH, 0x01
+			  LDI R16, 0
+			  LDI R17, 88
+			  clear_screen_loop: ST Z+, R16
+								 DEC R17
+								 BRNE clear_screen_loop
 
-       RET
+			  RET
 
 ;R0 and R24 re reserved for this timer interrupt
 ;Please use them elsewhere cautiously
@@ -1167,31 +1153,25 @@ Timer2Interrupt:
     LDI R24, 0x2E
     STS TCNT2, R24
     SBI PINB, 1 ; toggle output of PB1 by setting PINB,1
-    OUT SREG, R0
-  POP R0
-  POP R1
-    RETI
+    rjmp exit_timer2
   ShootKeyPressed:
     LDI R24, 248
     STS TCNT2, R24
     SBI PINB, 1 ; toggle output of PB1 by setting PINB,1
-    OUT SREG, R0
-  POP R0
-  POP R1
-    RETI
+    rjmp exit_timer2
   DefaultSound:
-    LDI R24, 0xFF
-    STS TCNT2, R24
+    LDI R24, 0xDF
+    ;LD R24, Y
+	STS TCNT2, R24
     ;SBI PINB, 1 ; toggle output of PB1 by setting PINB,1
   CBI PORTB, 0 ; sshut the buzzer
-    OUT SREG, R0
-  POP R0
-  POP R1
-    RETI
+   rjmp exit_timer2
 
   silence: CBI PORTB, 0
-       LDI R24, 0xFF
-       STS TCNT2, R24
+		   LDI R24, 0xEF
+		   STS TCNT2, R24
+  exit_timer2: 
+	   OUT SREG, R0
        POP R0
        POP R1
         RETI
@@ -1200,6 +1180,8 @@ Timer1Interrupt: PUSH R2
         PUSH R18
 		PUSH R16
 		PUSH R17
+		PUSH DummyReg
+
 		IN R2, SREG
 
 		LDI R16, 0xFF
@@ -1230,7 +1212,17 @@ Timer1Interrupt: PUSH R2
 		 OR DummyReg, R16
 		 STS RANDOM_NUMBER, DummyReg
 
+		;LD R18, Y+
+
+		;LD R18, Y
+		;CPI R18, 1
+		;BRNE exit_timer1
+
+		;LDI YL, LOW(NotesTable<<1)
+		;LDI YH, HIGH(NotesTable<<1)
+
 		exit_timer1: OUT SREG, R2
+					POP DummyReg
 					POP R17
 					POP R16
 					POP R18
@@ -1249,7 +1241,8 @@ Timer0interrupt:
 ;        ;CALL DISPLAY_INTERMEDIATE_STATE
          CALL UPDATE_BULLETSTATE
 	 
-	 LDI R17, 1
+	    ; ---- Read the decision from adcInterrupt and write to UP_STATE_TIMED and DOWN_STATE_TIMED
+		LDI R17, 1
 		LDS R18, MOVE_STATE
 		EOR R18, R17
 		STS MOVE_STATE, R18
@@ -1289,10 +1282,7 @@ JoystickInterrupt:
           CPI DummyReg, game_screen ; while playing can't switch state here
           BRNE next_state
 
-		  OUT SREG, R0
-		  POP DummyReg
-		  POP R0
-          RETI
+		  rjmp exit_joystick_interrupt
 
           next_state: LDS DummyReg, JOY_STK_STATE   ;Stores last state of joystick for change after two actions on interrupt
           SBRS DummyReg, 0        ; skip state increase if previous state was joy stick not pressed
@@ -1303,7 +1293,7 @@ JoystickInterrupt:
             LDI R16, 0x00
             OUT PCIFR, R16 ; reset interrupt
           
-		  OUT SREG, R0
+		 exit_joystick_interrupt: OUT SREG, R0
 		  POP DummyReg
 		  POP R0
 		  RETI
@@ -1322,12 +1312,12 @@ AdcInterrupt: PUSH R16
 			  LDS R17, ADCH
 
 			  CPI R17, 60
-			  BRLO exit2
+			  BRLO trigger_up
 
 		SBI PORTC, 3
 
 		CPI R17, 200
-		BRLO exit1
+		BRLO no_trigger
 
 		CBI PORTC, 2
 		; - triggger a move down -
@@ -1336,22 +1326,22 @@ AdcInterrupt: PUSH R16
 	
 		rjmp quit
 
-		exit1:  SBI PORTC, 2
+		no_trigger:  SBI PORTC, 2
 				rjmp quit
 
-		exit2:    CBI PORTC, 3
+		trigger_up:    CBI PORTC, 3
 		 			; - triggger a move up -
 					LDI R16, 1
 					STS UP_STATE, R16
 
-			quit:	LDI R16, 0b1110_1011 ;[ADEN,ADSC,ADATE,ADIF,_,ADIE,ADPS2,ADPS1,ADPS0]
-					STS ADCSRA, R16 ;START ANALOG TO DIGITAL CONVERSION
+		quit:	LDI R16, 0b1110_1011 ;[ADEN,ADSC,ADATE,ADIF,_,ADIE,ADPS2,ADPS1,ADPS0]
+				STS ADCSRA, R16 ;START ANALOG TO DIGITAL CONVERSION
 					
-					OUT SREG, R2
-					POP R2
-					POP R17
-					POP R16
-					RETI
+				OUT SREG, R2
+				POP R2
+				POP R17
+				POP R16
+				RETI
 
 increment_state:
   LDS DummyReg, SCREEN_STATE
@@ -1367,6 +1357,17 @@ increment_state:
   to_next_state:
     INC DummyReg
     STS SCREEN_STATE, DummyReg
+	LDI XH, 0x02
+LDI YH, 0x02
+LDI YL, 0x50
+LDI XL, 0x90
+
+LDI local_index1, 20
+LDI R16, 0x00
+INIT_BULLETS: ST Y, R16
+        ST X, R16
+        DEC local_index1
+        BRNE INIT_BULLETS
     RET
   to_start_state:
     LDI DummyReg, start_screen
@@ -1430,3 +1431,14 @@ CharTable3:
 .DB 0b01001, 0b01001, 0b01001, 0b01001, 0b01001, 0b01001, 0b00110, 0b00000 ;U
 .DB 0b00110, 0b01001, 0b01001, 0b01001, 0b01001, 0b01001, 0b00110, 0b00000 ;0
 .DB 0b10001, 0b01010, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100 ;Y
+
+
+NotesTable: ; 100 for silence and 1 to reset pointer
+.DB 244, 244, 100, 244, 100, 100, 244, 100
+.DB 246, 100, 236, 100, 241, 100, 232, 238
+.DB 100, 240, 239, 238, 236, 244, 246, 100
+.DB 247, 244, 246, 100, 244, 241, 242, 1
+.DB 100, 241, 100, 236, 232, 100, 238, 100
+.DB 238, 100, 240, 100, 239, 238, 236, 244
+.DB 246, 100, 257, 244, 246, 100, 244, 241
+.DB 242, 240, 100, 1, 1, 1, 1, 1
