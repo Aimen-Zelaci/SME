@@ -1144,11 +1144,11 @@ INIT_BULLET_POINTER:
 	LDI YH, 0x02
 	LDI YL, 0x50
 	LDI XL, 0x90
-	LDI local_index1, 20
+	LDI local_index1, 70
 	LDI R16, 0x00
 	INIT_BULLETS: 
-		ST Y, R16
-        ST X, R16
+		ST Y+, R16
+        ST X+, R16
         DEC local_index1
     BRNE INIT_BULLETS
 RET

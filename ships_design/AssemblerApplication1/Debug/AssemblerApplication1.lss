@@ -1,5 +1,5 @@
 
-AVRASM ver. 2.2.8  C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm Sat May 21 01:00:00 2022
+AVRASM ver. 2.2.8  C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm Sat May 21 19:11:56 2022
 
 [builtin](2): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.6.364\avrasm\inc\m328Pdef.inc'
 C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\AssemblerApplication1\main.asm(10): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.6.364\avrasm\inc\m328pdef.inc'
@@ -2175,11 +2175,11 @@ C:\Users\Deeksha\Documents\git_trials\Assembly_codes\aimen_codes\ships_design\As
 0003ae e0d2                      	LDI YH, 0x02
 0003af e5c0                      	LDI YL, 0x50
 0003b0 e9a0                      	LDI XL, 0x90
-0003b1 e114                      	LDI local_index1, 20
+0003b1 e416                      	LDI local_index1, 70
 0003b2 e000                      	LDI R16, 0x00
                                  	INIT_BULLETS: 
-0003b3 8308                      		ST Y, R16
-0003b4 930c                              ST X, R16
+0003b3 9309                      		ST Y+, R16
+0003b4 930d                              ST X+, R16
 0003b5 951a                              DEC local_index1
 0003b6 f7e1                          BRNE INIT_BULLETS
 0003b7 9508                      RET
